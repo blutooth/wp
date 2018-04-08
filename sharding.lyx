@@ -87,7 +87,7 @@
 \begin_body
 
 \begin_layout Title
-Tellabit - A Scalable Sharded Block-Chain
+Maxima - A Fast Fearless  Secure Sharded Block-Chain
 \end_layout
 
 \begin_layout Author
@@ -103,13 +103,13 @@ Chamberlin
 \begin_inset Newline newline
 \end_inset
 
- Tellabit Organisation 
+ Maxima Organisation 
 \begin_inset Newline newline
 \end_inset
 
  
 \family typewriter
-mec@tellabit.org
+mec@Maxima.org
 \family default
  
 \begin_inset Newline newline
@@ -119,7 +119,39 @@ mec@tellabit.org
 \end_layout
 
 \begin_layout Abstract
-TBC.
+Recently, high demand and limited scalability have increased the average
+ transaction times and fees in popular cryptocurrencies, yielding an unsatisfact
+ory experience.
+ Here we introduce Maxima a cryptocurrency with a sharded block-chain, one
+ where the network is divided into partitions called shard which maintain
+ their own blocks.
+ 
+\end_layout
+
+\begin_layout Abstract
+In Maxima, validator committees are sampled for each shard.
+
+\series bold
+ 
+\series default
+Validators vote on the availability of blocks to the network, and are shuffled
+ off shards very quickly.
+ Once a committee has determined if a block is accessible to nodes on a
+ shard, nodes on that shard execute the transactions and verify the blocks
+ validity- producing a succint fraud proof if the block is invalid.
+ Cross shard transactions are managed using tools from distributed systems,
+ like locks and yanks.
+ 
+\end_layout
+
+\begin_layout Abstract
+Maxima is a globally distributed computer that is secure under an honest
+ majority assumption, and puts in place mechanisms to prevent adaptive adversari
+es from corrupting the network.
+ We are one of the first proposals for a securely sharded block-chain that
+ enables the execution of smart contracts.
+ With 20 shards, Maxima is projected to process over 20,000 transactions
+ per second.
  
 \end_layout
 
@@ -128,36 +160,42 @@ Motivation
 \end_layout
 
 \begin_layout Standard
-The processing capacity of current block-chains has reached a bottle-neck.
- In Bitcoin, blocks are added to the block-chain at a fixed pace, aimed
- at approximately every 10 minutes.
- If too many or too few blocks are added, the difficulty of the proof of
- work puzzle is adjusted.
- Naive solutions to expanding the capacity of the block-chain have been
- found wanting: increase the size of blocks, and eventually we reach bandwidth
- limits.
- Not everyone can download GB sized blocks.
- Increase the rate at which blocks are added to the network, and this increases
- the orphaning rate of blocks.
- Indeed, a further question arises: why must everyone on the network store
- all the blocks that have ever existed, or witness everyone's transactions.
- This need not be the case, and a natural solution that does not expose
- everyone's blocks to the whole network.
- Blocks need only be broadcast within a shard.
+In Bitcoin, blocks are added to the block-chain approximately every 10 minutes,
+ at a relatively fixed pace that results in a TPS of 5-7.
+ Simple solutions to expanding the capacity of the block-chain have found
+ natural limits to their efficacy: enlarging blocks runs up against user
+ bandwidth limits; hastening the rate at which blocks are mined increases
+ orphaning.
  
 \end_layout
 
 \begin_layout Standard
-A sharded solution sees multiple block-chains operating on each shard.
- A participant of a given shard need not witness what takes place in other
- shards.
- The question is how to do sharding in a way that does not compromise security.
- In a naive sharding solution, we might only have a set of miners per shard.
- Each shard would thus have 1/ 100 th the security of a nomal block-chain.
- Another issue is how to effectively deal with cross-chain communication.
- In Tellabit, we seek to solve both of these issues to create a sharded
- block-chain that can scale.
- We will be developing our solutions on top of the NEO platform.
+A more promising solution to the problem of scaling is to run separate chains
+ that process transactions within partitions of the network, called shards.
+ The key challenges are: (1) how to manage the communication between the
+ different shards, a problem which is closely related to ensuring the atomicity
+ of transactions in a distributed system and (2) how to run these many separate
+ block-chains in a way that does not compromise on security, since each
+ shard-chain will only have a fraction of the mining/validation power of
+ the network;
+\end_layout
+
+\begin_layout Standard
+In this paper, we propose mechanisms to ensure the atomicity of transactions
+ and to ensure that the security of separate chains is not compromised.
+ We adopt an honest majority assumption for the network, assuming fewer
+ than a fraction 
+\begin_inset Formula $f$
+\end_inset
+
+ of 0.25 nodes are byzanine.
+ Note 
+\begin_inset Formula $f=0.25$
+\end_inset
+
+ is an arbitrary constant bounded below 1/3 to ensure good constants.
+ We also put in place safe-guards against adaptive adversaries who may bribe
+ network participants.
  
 \end_layout
 
@@ -166,7 +204,73 @@ Outline
 \end_layout
 
 \begin_layout Standard
-In Tellabit, we 
+Shard the block chain, each shard now has its own block-chain.
+ We adopt a security model where it is assumed in the global pool fewer
+ than 25% of miners are dishonest.
+ We secure each chain by doing two things 
+\end_layout
+
+\begin_layout Itemize
+Ensuring that sufficiently many nodes vote on blocks per round, to make
+ it an infiniteseimally small probability that a block is added to the round.
+ 
+\end_layout
+
+\begin_layout Itemize
+Ensuring that validators only vote very quickly on block, to limit the time
+ that an adversary has to corrupt blocks.
+ Think of someone offering bribes, the longer someone remains within a shard
+ the easier it becomes to corrupt.
+ 
+\end_layout
+
+\begin_layout Itemize
+The way that we achieve this is by separating state execution from validity
+ checking.
+ 
+\end_layout
+
+\begin_layout Section
+Inspiration 
+\end_layout
+
+\begin_layout Standard
+We would like to thank Ethereum and Dfinity for the idea of separating state
+ execution from validity checking.
+ We further thank Ethereum and storJ for the initial idea of eraure codes.
+ We also thank Zilliqa and dfinity for the idea of having committees vote
+ on block, committees which are randomly sampled.
+ 
+\end_layout
+
+\begin_layout Standard
+Our original contributions are: 
+\end_layout
+
+\begin_layout Itemize
+Formalising a concrete mechanism for multi-dimensional erasure codes, without
+ checking more than O(1) merkle roots.
+ Previous solutions either relied on further data availability proofs or
+ an increased burden pn verifiers.
+ 
+\end_layout
+
+\begin_layout Itemize
+We also apply erasure codes in a novel way.
+ Previous solutions to off-loading state execution to network participants
+ relied on rounds of interactivity to generate proofs of incorrectness,
+ See Trubeit.
+ Instead, we use erasure codes to prove that intermediate state has been
+ committed, which can serve to produce succinct fraud proofs with no interactivi
+ty.
+ 
+\end_layout
+
+\begin_layout Itemize
+We also developed several variants of a cross shard locking system which
+ through discussions with Ethereum was adapted to a cross shard yanking
+ system.
+ 
 \end_layout
 
 \begin_layout Section
@@ -229,12 +333,12 @@ Adopt a consensus protocol that admits no forks at the application layer,
 \end_layout
 
 \begin_layout Standard
-In Tellabit, we adopt the second approach but with the following fail-safe:
+In Maxima, we adopt the second approach but with the following fail-safe:
  In the event of a large-scale attack, whether clients would chose the dishonest
  chain or chose to revert those changes would be determined largely by social
  consensus: a proof that an attack had been performed by a dishonest majority
- with encouragement from the Tellabit organisation about which block to
- revert to.
+ with encouragement from the Maxima organisation about which block to revert
+ to.
  This would be a similar mechanism to the Ethereum foundation's advice about
  which block to revert to after the Dao hack .
  
@@ -253,7 +357,7 @@ Having made the case for forking chains, it should be noted that in the
 \end_layout
 
 \begin_layout Standard
-Having said that, Tellabit's approach would be to prevent any form of attack,
+Having said that, Maxima's approach would be to prevent any form of attack,
  and to provide strogner safety guarantees than Bitcoin- for instance by
  adopting proof of stake which reduces miner centralisation
 \begin_inset Foot

@@ -1,9 +1,7 @@
-#LyX 2.2 created this file. For more info see http://www.lyx.org/
-\lyxformat 508
+#LyX 2.0 created this file. For more info see http://www.lyx.org/
+\lyxformat 413
 \begin_document
 \begin_header
-\save_transient_properties true
-\origin unavailable
 \textclass article
 \begin_preamble
 \usepackage[final]{nips_2016}
@@ -26,16 +24,16 @@
 \language_package babel
 \inputencoding utf8
 \fontencoding T1
-\font_roman "default" "default"
-\font_sans "default" "default"
-\font_typewriter "default" "default"
-\font_math "auto" "auto"
+\font_roman default
+\font_sans default
+\font_typewriter default
 \font_default_family default
 \use_non_tex_fonts false
 \font_sc false
 \font_osf false
-\font_sf_scale 100 100
-\font_tt_scale 100 100
+\font_sf_scale 100
+\font_tt_scale 100
+
 \graphics default
 \default_output_format default
 \output_sync 0
@@ -46,24 +44,15 @@
 \use_hyperref false
 \papersize default
 \use_geometry false
-\use_package amsmath 1
-\use_package amssymb 1
-\use_package cancel 1
-\use_package esint 1
-\use_package mathdots 1
-\use_package mathtools 1
-\use_package mhchem 1
-\use_package stackrel 1
-\use_package stmaryrd 1
-\use_package undertilde 1
-\cite_engine natbib
-\cite_engine_type authoryear
-\biblio_style plainnat
+\use_amsmath 1
+\use_esint 1
+\use_mhchem 1
+\use_mathdots 1
+\cite_engine natbib_authoryear
 \use_bibtopic false
 \use_indices false
 \paperorientation portrait
 \suppress_date false
-\justification true
 \use_refstyle 1
 \index Index
 \shortcut idx
@@ -119,54 +108,36 @@ mec@tellabit.org
 \end_layout
 
 \begin_layout Abstract
-TBC.
+The abstract paragraph should be indented 
+\begin_inset Formula $\nicefrac{1}{2}$
+\end_inset
+
+
+\begin_inset space ~
+\end_inset
+
+inch (3
+\begin_inset space ~
+\end_inset
+
+picas) on both the left- and right-hand margins.
+ Use 10
+\begin_inset space ~
+\end_inset
+
+point type, with a vertical spacing (leading) of 11
+\begin_inset space ~
+\end_inset
+
+points.
+ The word 
+\series bold
+Abstract
+\series default
+ must be centered, bold, and in point size 12.
+ Two line spaces precede the abstract.
+ The abstract must be limited to one paragraph.
  
-\end_layout
-
-\begin_layout Section
-Motivation
-\end_layout
-
-\begin_layout Standard
-The processing capacity of current block-chains has reached a bottle-neck.
- In Bitcoin, blocks are added to the block-chain at a fixed pace, aimed
- at approximately every 10 minutes.
- If too many or too few blocks are added, the difficulty of the proof of
- work puzzle is adjusted.
- Naive solutions to expanding the capacity of the block-chain have been
- found wanting: increase the size of blocks, and eventually we reach bandwidth
- limits.
- Not everyone can download GB sized blocks.
- Increase the rate at which blocks are added to the network, and this increases
- the orphaning rate of blocks.
- Indeed, a further question arises: why must everyone on the network store
- all the blocks that have ever existed, or witness everyone's transactions.
- This need not be the case, and a natural solution that does not expose
- everyone's blocks to the whole network.
- Blocks need only be broadcast within a shard.
- 
-\end_layout
-
-\begin_layout Standard
-A sharded solution sees multiple block-chains operating on each shard.
- A participant of a given shard need not witness what takes place in other
- shards.
- The question is how to do sharding in a way that does not compromise security.
- In a naive sharding solution, we might only have a set of miners per shard.
- Each shard would thus have 1/ 100 th the security of a nomal block-chain.
- Another issue is how to effectively deal with cross-chain communication.
- In Tellabit, we seek to solve both of these issues to create a sharded
- block-chain that can scale.
- We will be developing our solutions on top of the NEO platform.
- 
-\end_layout
-
-\begin_layout Section
-Outline
-\end_layout
-
-\begin_layout Standard
-In Tellabit, we 
 \end_layout
 
 \begin_layout Section
@@ -257,7 +228,7 @@ Having said that, Tellabit's approach would be to prevent any form of attack,
  and to provide strogner safety guarantees than Bitcoin- for instance by
  adopting proof of stake which reduces miner centralisation
 \begin_inset Foot
-status collapsed
+status open
 
 \begin_layout Plain Layout
 There are significant economies of scale that come with proof of work mining:
@@ -478,75 +449,6 @@ Stateless clients
 Erasure Coding 
 \end_layout
 
-\begin_layout Standard
-We want validators to be able to guarantee that honest nodes can access
- data on the network, or stated more succinctly that 
-\series bold
-data is available
-\series default
-.
- A simple way for validators to check that data is available is to download
- a whole block.
- So, in the current scheme we would sample a set of validators - say 400,
- which is enough to guarantee an honest majority of participants.
- Then all of these shards would attempt to download the data from the network,
- and finaly take a vote between themselves on whether the data is available.
- 
-\end_layout
-
-\begin_layout Standard
-However, to increase efficiency, we would like to use a scheme where each
- validator need not download the entire block.
- If blocks were really large, say GB sized, which would be ideal for scalability
-, it may be impractical to have validators enter a shard and download multiple
- blocks to verify availability.
-\end_layout
-
-\begin_layout Standard
-We can avoid this, if we take a sampling approach.
- However, validators will not sample directly from the block itself, but
- instead will sample from an erasure code.
- 
-\end_layout
-
-\begin_layout Standard
-Why do we want validators to check that data is available for a block? If
- the data for a block is available to the network, this means that honest
- executors on a shard can check to see if there are any faults with it and
- produce succint fraud proofs, O(1) sized proofs that a block contains invalid
- data.
- 
-\end_layout
-
-\begin_layout Standard
-What this ultimately means is that executors on a shord can check to see
- if 
-\end_layout
-
-\begin_layout Standard
-We don't actually want the validators to perform the executions themselves
- because doing so would take too long for large blocks of for transactions
- that take a long tiem to execute.
- 
-\end_layout
-
-\begin_layout Itemize
-N - the number of verifiers
-\end_layout
-
-\begin_layout Itemize
-M - the size of a piece of data 
-\end_layout
-
-\begin_layout Itemize
-P - the number of checks made by each client 
-\end_layout
-
-\begin_layout Standard
-Collectively N verifiers want to check a block of size M is available.
- They wish to do so without 
-\end_layout
-
 \begin_layout Section*
 Data Availability, State Execution and fast shuffling
 \end_layout
@@ -661,10 +563,6 @@ Our Approach:
 
 \begin_layout Itemize
 Solve availability:
-\begin_inset Separator latexpar
-\end_inset
-
-
 \end_layout
 
 \begin_deeper
@@ -746,10 +644,6 @@ Solve validity
 
 \begin_layout Itemize
 truebit style execution 
-\begin_inset Separator latexpar
-\end_inset
-
-
 \end_layout
 
 \begin_deeper
@@ -785,15 +679,11 @@ There is a new style file for papers submitted in 2016!
 \begin_layout Standard
 NIPS requires electronic submissions.
  The electronic submission site is 
-\begin_inset Separator latexpar
-\end_inset
-
-
 \end_layout
 
 \begin_layout Standard
 \align center
-\begin_inset Flex URL
+\begin_inset Flex Flex:URL
 status open
 
 \begin_layout Plain Layout
@@ -840,9 +730,8 @@ The margins in 2016 are the same as since 2007, which allow for
 \end_layout
 
 \begin_layout Standard
-Authors are required to use the NIPS \SpecialChar LaTeX
- style files obtainable at the NIPS
- website as indicated below.
+Authors are required to use the NIPS LaTeX style files obtainable at the
+ NIPS website as indicated below.
  Please make sure you use the current files and not previous versions.
  Tweaking the style files may be grounds for rejection.
 \end_layout
@@ -854,15 +743,11 @@ Retrieval of style files
 \begin_layout Standard
 The style files for NIPS and other conference information are available
  on the World Wide Web at 
-\begin_inset Separator latexpar
-\end_inset
-
-
 \end_layout
 
 \begin_layout Standard
 \align center
-\begin_inset Flex URL
+\begin_inset Flex Flex:URL
 status collapsed
 
 \begin_layout Plain Layout
@@ -889,17 +774,15 @@ The only supported style file for NIPS 2016 is
 \family typewriter
 nips_2016.sty
 \family default
-, rewritten for \SpecialChar LaTeX2e
-.
+, rewritten for LaTeX2e.
  
 \series bold
-Previous style files for \SpecialChar LaTeX
- 2.09, Microsoft Word, and RTF are no longer supported!
+Previous style files for LaTeX 2.09, Microsoft Word, and RTF are no longer
+ supported!
 \end_layout
 
 \begin_layout Standard
-The new \SpecialChar LaTeX
- style file contains two optional arguments: 
+The new LaTeX style file contains two optional arguments: 
 \family typewriter
 final
 \family default
@@ -1190,15 +1073,11 @@ The documentation for
 natbib
 \family default
  may be found at 
-\begin_inset Separator latexpar
-\end_inset
-
-
 \end_layout
 
 \begin_layout Standard
 \align center
-\begin_inset Flex URL
+\begin_inset Flex Flex:URL
 status collapsed
 
 \begin_layout Plain Layout
@@ -1538,7 +1417,7 @@ status collapsed
 \end_inset
 
  
-\begin_inset Caption Standard
+\begin_inset Caption
 
 \begin_layout Plain Layout
 Sample figure caption.
@@ -1594,15 +1473,11 @@ booktabs
 \family default
  package, which allows for typesetting high-quality, professional tables:
  
-\begin_inset Separator latexpar
-\end_inset
-
-
 \end_layout
 
 \begin_layout Standard
 \align center
-\begin_inset Flex URL
+\begin_inset Flex Flex:URL
 status collapsed
 
 \begin_layout Plain Layout
@@ -1639,7 +1514,7 @@ status open
 
 \begin_layout Plain Layout
 \align center
-\begin_inset Caption Standard
+\begin_inset Caption
 
 \begin_layout Plain Layout
 Sample table title
@@ -1658,9 +1533,9 @@ name "sample-table"
 \begin_inset Tabular
 <lyxtabular version="3" rows="5" columns="3">
 <features booktabs="true" tabularvalignment="middle">
-<column alignment="left" valignment="top">
-<column alignment="left" valignment="top">
-<column alignment="left" valignment="top">
+<column alignment="left" valignment="top" width="0">
+<column alignment="left" valignment="top" width="0">
+<column alignment="left" valignment="top" width="0">
 <row>
 <cell multicolumn="1" alignment="none" valignment="top" topline="true" usebox="none" special="c">
 \begin_inset Text
@@ -1914,7 +1789,7 @@ xpdf
 The IEEE has recommendations for generating PDF files whose fonts are also
  acceptable for NIPS.
  Please see 
-\begin_inset Flex URL
+\begin_inset Flex Flex:URL
 status collapsed
 
 \begin_layout Plain Layout
@@ -1925,10 +1800,6 @@ http://www.emfield.org/icuwb2010/downloads/IEEE-PDF-SpecV32.pdf
 \end_inset
 
  
-\begin_inset Separator latexpar
-\end_inset
-
-
 \end_layout
 
 \begin_deeper
@@ -2106,8 +1977,7 @@ If your file contains type 3 fonts or non embedded TrueType fonts, we will
 \end_layout
 
 \begin_layout Subsection
-Margins in \SpecialChar LaTeX
-
+Margins in LaTeX
 \end_layout
 
 \begin_layout Standard
@@ -2180,7 +2050,7 @@ end{verbatim}
 \begin_layout Standard
 \noindent
 See Section 4.4 in the graphics bundle documentation (
-\begin_inset Flex URL
+\begin_inset Flex Flex:URL
 status collapsed
 
 \begin_layout Plain Layout
@@ -2194,8 +2064,8 @@ http://mirrors.ctan.org/macros/latex/required/graphics/grfguide.pdf
 \end_layout
 
 \begin_layout Standard
-A number of width problems arise when \SpecialChar LaTeX
- cannot properly hyphenate a line.
+A number of width problems arise when LaTeX cannot properly hyphenate a
+ line.
  Please give 
 \begin_inset ERT
 status collapsed
@@ -2292,7 +2162,7 @@ Advances in Neural Information Processing Systems 7
 \begin_inset space \space{}
 \end_inset
 
-609–616.
+609--616.
  Cambridge, MA: MIT Press.
 \end_layout
 
@@ -2313,7 +2183,7 @@ The Book of GENESIS: Exploring Realistic Neural Models with the GEneral
  NEural SImulation System.
 
 \shape default
- New York: TELOS/Springer–Verlag.
+ New York: TELOS/Springer--Verlag.
 \end_layout
 
 \begin_layout Standard

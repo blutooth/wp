@@ -162,14 +162,6 @@ A sharded solution sees multiple block-chains operating on each shard.
 \end_layout
 
 \begin_layout Section
-Outline
-\end_layout
-
-\begin_layout Standard
-In Tellabit, we 
-\end_layout
-
-\begin_layout Section
 Forking vs Fork-Free Consensus Protocols
 \end_layout
 
@@ -497,15 +489,6 @@ data is available
 \begin_layout Standard
 However, to increase efficiency, we would like to use a scheme where each
  validator need not download the entire block.
- If blocks were really large, say GB sized, which would be ideal for scalability
-, it may be impractical to have validators enter a shard and download multiple
- blocks to verify availability.
-\end_layout
-
-\begin_layout Standard
-We can avoid this, if we take a sampling approach.
- However, validators will not sample directly from the block itself, but
- instead will sample from an erasure code.
  
 \end_layout
 
