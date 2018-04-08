@@ -87,7 +87,7 @@
 \begin_body
 
 \begin_layout Title
-Maxima - A Fast Fearless And Secure Sharded Block-Chain
+Maxima - A Fast Fearless Secure Sharded Block-Chain
 \end_layout
 
 \begin_layout Author
@@ -148,15 +148,13 @@ Validators vote on the availability of blocks to the network, and are shuffled
 Maxima is a globally distributed computer that is secure under an honest
  majority assumption, and puts in place mechanisms to prevent adaptive adversari
 es from corrupting the network.
- We are one of the first proposals for a securely sharded block-chain that
- enables the execution of smart contracts.
  With 20 shards, Maxima is projected to process over 20,000 transactions
  per second.
  
 \end_layout
 
 \begin_layout Section
-Motivation
+Motivation and Outline
 \end_layout
 
 \begin_layout Standard
@@ -199,6 +197,66 @@ In this paper, we propose mechanisms to ensure the atomicity of transactions
  
 \end_layout
 
+\begin_layout Standard
+With this in mind, our protocol can be described below.
+ Validator committees are sampled for each shard.
+ Sampling validators randomly means that with a sufficient number (400)
+ we can ensure an honest majority of 2/3 of per shard with a very high probabili
+ty.
+ 
+\end_layout
+
+\begin_layout Standard
+Validators then vote on the availability of blocks to the network, and are
+ shuffled off shards very quickly.
+ This fast shaffling is to ensure that an adaptive adversary does not have
+ the time to find and corrupt the validators of each shard.
+ Because of this fast shuffling, the work that a validator can perform must
+ be very minimal.
+ Validators check that the data corresponding to the merkle root of a block
+ is accessible to a shard, so that the members of a shard can execute those
+ transactions.
+ If there is a dispute about transaction execution, validators also resolve
+ disputes by considering succinct proofs of invalid execution.
+ Cross shard transactions are managed using tools from distributed systems,
+ like yanks, to ensure that transactions can be executed atomically.
+ 
+\end_layout
+
+\begin_layout Section
+Inspiration and Contributions
+\end_layout
+
+\begin_layout Standard
+We would like to thank: Ethereum and Dfinity for the idea of separating
+ state execution from validity checking; Zilliqa and dfinity for the idea
+ of forming committees using random sampling to vote on blocks; Ethereum
+ for the idea of using Erasure Coding to prove availability.
+ Our original contributions are: 
+\end_layout
+
+\begin_layout Itemize
+Formalising a concrete mechanism for multi-dimensional erasure codes, without
+ checking more than O(1) merkle roots.
+ Previous solutions either relied on further data availability proofs or
+ an increased burden on verifiers, and relied on a different construction.
+ 
+\end_layout
+
+\begin_layout Itemize
+We are the first to apply erasure codes to prove that a program's intermediate
+ state execution has been committed to the network, which enables the generation
+ of succinct fraud proofs that execution is incorrect.
+ Previous solutions to off-loading state execution relied on rounds of interacti
+vity to generate proofs of incorrectness, See Trubeit.
+\end_layout
+
+\begin_layout Itemize
+We also developed variants of a cross shard locking system which were eventually
+ adapted by them to a cross-shard yanking system, which we have also adopted
+ in this paper.
+\end_layout
+
 \begin_layout Section
 Outline
 \end_layout
@@ -230,46 +288,7 @@ The way that we achieve this is by separating state execution from validity
  
 \end_layout
 
-\begin_layout Section
-Inspiration 
-\end_layout
-
-\begin_layout Standard
-We would like to thank Ethereum and Dfinity for the idea of separating state
- execution from validity checking.
- We further thank Ethereum and storJ for the initial idea of eraure codes.
- We also thank Zilliqa and dfinity for the idea of having committees vote
- on block, committees which are randomly sampled.
- 
-\end_layout
-
-\begin_layout Standard
-Our original contributions are: 
-\end_layout
-
 \begin_layout Itemize
-Formalising a concrete mechanism for multi-dimensional erasure codes, without
- checking more than O(1) merkle roots.
- Previous solutions either relied on further data availability proofs or
- an increased burden pn verifiers.
- 
-\end_layout
-
-\begin_layout Itemize
-We also apply erasure codes in a novel way.
- Previous solutions to off-loading state execution to network participants
- relied on rounds of interactivity to generate proofs of incorrectness,
- See Trubeit.
- Instead, we use erasure codes to prove that intermediate state has been
- committed, which can serve to produce succinct fraud proofs with no interactivi
-ty.
- 
-\end_layout
-
-\begin_layout Itemize
-We also developed several variants of a cross shard locking system which
- through discussions with Ethereum was adapted to a cross shard yanking
- system.
  
 \end_layout
 
