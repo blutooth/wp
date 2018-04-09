@@ -87,7 +87,7 @@
 \begin_body
 
 \begin_layout Title
-Axima - A Fast Fearless Secure Sharded Block-Chain
+Maxima - A Fast Fearless Secure Sharded Block-Chain
 \end_layout
 
 \begin_layout Author
@@ -153,6 +153,10 @@ es from corrupting the network.
  
 \end_layout
 
+\begin_layout Part
+Introduction
+\end_layout
+
 \begin_layout Section
 Motivation and Outline
 \end_layout
@@ -175,7 +179,7 @@ A more promising solution to the problem of scaling is to run separate chains
  of transactions in a distributed system and (2) how to run these many separate
  block-chains in a way that does not compromise on security, since each
  shard-chain will only have a fraction of the mining/validation power of
- the network;
+ the network.
 \end_layout
 
 \begin_layout Standard
@@ -186,7 +190,7 @@ In this paper, we propose mechanisms to ensure the atomicity of transactions
 \begin_inset Formula $f$
 \end_inset
 
- of 0.25 nodes are byzanine.
+ of 0.25 nodes are Byzantine.
  Note 
 \begin_inset Formula $f=0.25$
 \end_inset
@@ -201,19 +205,18 @@ In this paper, we propose mechanisms to ensure the atomicity of transactions
 With this in mind, our protocol can be described below.
  Validator committees are sampled for each shard.
  Sampling validators randomly means that with a sufficient number (400)
- we can ensure an honest majority of 2/3 of per shard with a very high probabili
-ty.
+ we can ensure an honest majority of 2/3 of per shard almost surely.
  
 \end_layout
 
 \begin_layout Standard
 Validators then vote on the availability of blocks to the network, and are
  shuffled off shards very quickly.
- This fast shaffling is to ensure that an adaptive adversary does not have
+ This fast shuffling is to ensure that an adaptive adversary does not have
  the time to find and corrupt the validators of each shard.
  Because of this fast shuffling, the work that a validator can perform must
  be very minimal.
- Validators check that the data corresponding to the merkle root of a block
+ Validators check that the data corresponding to the Merkle root of a block
  is accessible to a shard, so that the members of a shard can execute those
  transactions.
  If there is a dispute about transaction execution, validators also resolve
@@ -224,22 +227,22 @@ Validators then vote on the availability of blocks to the network, and are
 \end_layout
 
 \begin_layout Section
-Inspiration and Contributions
+Inspiration and Original Contributions
 \end_layout
 
 \begin_layout Standard
 We would like to thank: Ethereum and Dfinity for the idea of separating
- state execution from validity checking; Zilliqa and dfinity for the idea
- of forming committees using random sampling to vote on blocks; Ethereum
- for the idea of using Erasure Coding to prove availability.
+ state execution from data availability checking; Ethereum for the idea
+ of using Erasure Coding to prove availability; Zilliqa and Dfinity for
+ the idea of forming committees using random sampling to vote on blocks.
  Our original contributions are: 
 \end_layout
 
 \begin_layout Itemize
-Formalising a concrete mechanism for multi-dimensional erasure codes, without
- checking more than O(1) merkle roots.
- Previous solutions either relied on further data availability proofs or
- an increased burden on verifiers, and relied on a different construction.
+Formalising a concrete mechanism for multi-dimensional self-authenticating
+ erasure codes, without checking more than O(1) Merkle roots.
+ Previous solutions have relied on further data availability proofs or an
+ increased burden on verifiers.
  
 \end_layout
 
@@ -247,53 +250,82 @@ Formalising a concrete mechanism for multi-dimensional erasure codes, without
 We are the first to apply erasure codes to prove that a program's intermediate
  state execution has been committed to the network, which enables the generation
  of succinct fraud proofs that execution is incorrect.
- Previous solutions to off-loading state execution relied on rounds of interacti
-vity to generate proofs of incorrectness, See Trubeit.
+ Previous solutions to off-loading state execution, like Trubit, relied
+ on rounds of interactivity to generate proofs of incorrectness.
 \end_layout
 
 \begin_layout Itemize
 We also developed variants of a cross shard locking system which were eventually
  adapted by Ethereum to a cross-shard yanking system, which we have also
- adopted in this paper.
+ adopted.
 \end_layout
 
 \begin_layout Section
-Outline
+Protocol Structure 
 \end_layout
 
 \begin_layout Standard
-Shard the block chain, each shard now has its own block-chain.
- We adopt a security model where it is assumed in the global pool fewer
- than 25% of miners are dishonest.
- We secure each chain by doing two things 
+The construction of our protocol depends on the following, relatively independen
+t components, which can be subdivided into three themes: voting schemes;
+ data creation and concurrency controls.
 \end_layout
 
-\begin_layout Itemize
-Ensuring that sufficiently many nodes vote on blocks per round, to make
- it an infiniteseimally small probability that a block is added to the round.
- 
+\begin_layout Enumerate
+Consensus Schemes:
 \end_layout
 
-\begin_layout Itemize
-Ensuring that validators only vote very quickly on block, to limit the time
- that an adversary has to corrupt blocks.
- Think of someone offering bribes, the longer someone remains within a shard
- the easier it becomes to corrupt.
- 
+\begin_deeper
+\begin_layout Enumerate
+Voting Schemes - Forkful vs Fork-free
 \end_layout
 
-\begin_layout Itemize
-The way that we achieve this is by separating state execution from validity
- checking.
- 
+\begin_layout Enumerate
+Validator Sampling and Shuffling
 \end_layout
 
-\begin_layout Itemize
- 
+\begin_layout Enumerate
+Marginal Voting Incentives 
+\end_layout
+
+\end_deeper
+\begin_layout Enumerate
+Data Creation 
+\end_layout
+
+\begin_deeper
+\begin_layout Enumerate
+Block Creation 
+\end_layout
+
+\begin_layout Enumerate
+Data Availability Checking Through Erasure Codes
+\end_layout
+
+\begin_layout Enumerate
+Fraud Proofs
+\end_layout
+
+\end_deeper
+\begin_layout Enumerate
+Concurrency Controls
+\end_layout
+
+\begin_deeper
+\begin_layout Enumerate
+Locking State for Cross Shard Transactions
+\end_layout
+
+\begin_layout Enumerate
+Stateless Clients
+\end_layout
+
+\end_deeper
+\begin_layout Part
+Consensus Schemes
 \end_layout
 
 \begin_layout Section
-Forking vs Fork-Free Consensus Protocols
+Voting Schemes - Forkful vs Fork-free
 \end_layout
 
 \begin_layout Standard
@@ -330,12 +362,14 @@ However, in the context of a sharded block-chain forking consensus protocols
  that depend on the state in shard A, then a reversion of blocks on shard
  A will need to effect a reversions of blocks on shard B.
  Tracking all the state dependencies and ensuring that reversions do not
- revert too much of the global state is still an unsolved challenge.
+ revert too much of the global state is still an unsolved problem in the
+ block-chain space.
  This problem is compounded by the fragmentation of state that comes with
  sharding.
  If state is distributed across many shards, then a large proportion of
  transactions on the block-chain reference state between shards, meaning
- a large number of dependencies.
+ a large number of dependencies, and reversions on one shard causing reversions
+ on many others .
  Bearing these thoughts in mind, a sharded block-chain must either: 
 \end_layout
 
@@ -358,8 +392,6 @@ In Maxima, we adopt the second approach but with the following fail-safe:
  consensus: a proof that an attack had been performed by a dishonest majority
  with encouragement from the Maxima organisation about which block to revert
  to.
- This would be a similar mechanism to the Ethereum foundation's advice about
- which block to revert to after the Dao hack .
  
 \end_layout
 
@@ -367,7 +399,7 @@ In Maxima, we adopt the second approach but with the following fail-safe:
 Having made the case for forking chains, it should be noted that in the
  entire history of Bitcoin only once was a block-chain reverted by more
  than its finalisation threshold of 6 blocks.
- This incident occured due to a mining consortium not checking block validity
+ This incident occurred due to a mining consortium not checking block validity
  when mining.
  However, a social layer of consensus has been used at least twice to change
  the protocol.
@@ -376,8 +408,16 @@ Having made the case for forking chains, it should be noted that in the
 \end_layout
 
 \begin_layout Standard
+More concretely, our voting scheme: 
+\end_layout
+
+\begin_layout Standard
+\begin_inset Note Note
+status collapsed
+
+\begin_layout Plain Layout
 Having said that, Maxima's approach would be to prevent any form of attack,
- and to provide strogner safety guarantees than Bitcoin- for instance by
+ and to provide stronger safety guarantees than Bitcoin- for instance by
  adopting proof of stake which reduces miner centralisation
 \begin_inset Foot
 status collapsed
@@ -402,6 +442,11 @@ There are significant economies of scale that come with proof of work mining:
  resolves the problem of tracking inter-shard dependencies and reverting
  on block-chain forks, although that is not the present plan.
  
+\end_layout
+
+\end_inset
+
+
 \end_layout
 
 \begin_layout Section
@@ -431,7 +476,7 @@ Subsample from the entire population so many validators are voting but not
 
 \begin_layout Enumerate
 Ensure the right kind of marginal incentive structures exist.
- One can dot his by using a system similar to Caspar slashign conditions.
+ One can dot his by using a system similar to Caspar slashing conditions.
  Not only does this act as a deterrent, but will also be a key sign of bribary
  that could lead up to a social consensus step.
  
@@ -598,7 +643,7 @@ Stateless clients
 \end_layout
 
 \begin_layout Section*
-Erasure Coding 
+Self-Authenticating Erasure Codes 
 \end_layout
 
 \begin_layout Standard
@@ -658,16 +703,1149 @@ N - the number of verifiers
 \end_layout
 
 \begin_layout Itemize
-M - the size of a piece of data 
+P - the number of checks made by each client 
 \end_layout
 
 \begin_layout Itemize
-P - the number of checks made by each client 
+Denot
 \end_layout
 
 \begin_layout Standard
 Collectively N verifiers want to check a block of size M is available.
  They wish to do so without 
+\end_layout
+
+\begin_layout Section
+Construction
+\end_layout
+
+\begin_layout Itemize
+K - The expansion factor of each read solomon code
+\end_layout
+
+\begin_layout Itemize
+Let 
+\begin_inset Formula $D_{ij},F_{ij},G_{ij}$
+\end_inset
+
+ represent the data int he first, second and third squares respectively
+\end_layout
+
+\begin_layout Itemize
+\begin_inset Formula $x$
+\end_inset
+
+,
+\begin_inset Formula $y$
+\end_inset
+
+,
+\begin_inset Formula $z$
+\end_inset
+
+ are respectively the bilinear accumulator constants for the committed values
+\end_layout
+
+\begin_layout Itemize
+First Square:
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+Let 
+\begin_inset Formula $d_{ij}$
+\end_inset
+
+ represent chunk 
+\begin_inset Formula $i,j$
+\end_inset
+
+ of the original data
+\end_layout
+
+\begin_layout Itemize
+\begin_inset Formula $x_{ij}$
+\end_inset
+
+ is the bilinear accumulator witness for the tuple 
+\begin_inset Formula $(d_{ij},i,j)$
+\end_inset
+
+, that is 
+\begin_inset Formula $e[(d_{ij},i,j),x_{ij}]=x$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Itemize
+\begin_inset Formula $D_{ij}$
+\end_inset
+
+ represent 
+\begin_inset Formula $(d_{ij},i,j),x_{ij}$
+\end_inset
+
+
+\end_layout
+
+\end_deeper
+\begin_layout Itemize
+Second Square:
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+Let 
+\begin_inset Formula $f_{ij}$
+\end_inset
+
+ represent the 
+\begin_inset Formula $j$
+\end_inset
+
+ th evaluation point in the erasure code for row 
+\begin_inset Formula $D_{i*}$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Itemize
+\begin_inset Formula $y_{ij}$
+\end_inset
+
+ is the bilinear accumulator witness for the tuple 
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+
+\begin_inset Formula $(f_{ij},i,j)$
+\end_inset
+
+
+\family default
+\series default
+\shape default
+\size default
+\emph default
+\bar default
+\strikeout default
+\uuline default
+\uwave default
+\noun default
+\color inherit
+, that is 
+\begin_inset Formula $e[(f_{ij},i,j),y_{ij}]=y$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Itemize
+\begin_inset Formula $F_{ij}$
+\end_inset
+
+ represent 
+\begin_inset Formula $(f_{ij},i,j),y_{ij}$
+\end_inset
+
+
+\end_layout
+
+\end_deeper
+\begin_layout Itemize
+Third Square:
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+Let 
+\begin_inset Formula $g_{ij}$
+\end_inset
+
+ represent the 
+\begin_inset Formula $i$
+\end_inset
+
+ th evaluation point in the erasure code for column 
+\begin_inset Formula $F_{*j}$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Itemize
+\begin_inset Formula $z_{ij}$
+\end_inset
+
+ is the bilinear accumulator witness for the tuple 
+\begin_inset Formula $(g_{ij},i,j)$
+\end_inset
+
+, that is 
+\begin_inset Formula $e[(g_{ij},i,j),z_{ij}]=z$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Itemize
+\begin_inset Formula $G_{ij}$
+\end_inset
+
+ represent 
+\begin_inset Formula $(g_{ij},i,j),z_{ij}$
+\end_inset
+
+
+\end_layout
+
+\end_deeper
+\begin_layout Itemize
+An example is given below with K =2/3:
+\end_layout
+
+\begin_layout Standard
+\align center
+\begin_inset Tabular
+<lyxtabular version="3" rows="5" columns="5">
+<features tabularvalignment="middle">
+<column alignment="center" valignment="top">
+<column alignment="center" valignment="top">
+<column alignment="center" valignment="top">
+<column alignment="center" valignment="top">
+<column alignment="center" valignment="top">
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $(d_{00},0,0),x_{00}$
+\end_inset
+
+ 
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $(d_{01},0,1),x_{01}$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $(f_{00},0,0),y_{00}$
+\end_inset
+
+ 
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $(f_{01},0,1),y_{01}$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $(f_{02},0,2),y_{02}$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $(d_{10},1,0),x_{10}$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" bottomline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $(d_{11},1,1),x_{11}$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $(f_{10},1,0),y_{10}$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $(f_{11},1,1),y_{11}$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $(f_{12},1,2),y_{12}$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $(g_{00},0,0),z_{00}$
+\end_inset
+
+ 
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $(g_{01},0,1),z_{01}$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $(g_{02},0,2),z_{02}$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $(g_{10},1,0),z_{10}$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $(g_{11},1,1),z_{11}$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $(g_{12},1,2),z_{12}$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $(g_{20},2,0),z_{20}$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" bottomline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $(g_{21},2,1),z_{21}$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" bottomline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $(g_{22},2,2),z_{22}$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+</row>
+</lyxtabular>
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset VSpace defskip
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsection
+Enforcing Authentication 
+\end_layout
+
+\begin_layout Standard
+If an element in 
+\begin_inset Formula $D$
+\end_inset
+
+ or 
+\begin_inset Formula $F$
+\end_inset
+
+ does not satisfy it's authentication constraint, i.e 
+\begin_inset Formula $e[(f_{ij},i,j),y_{ij}]\neq y$
+\end_inset
+
+ and element is available then this can be proved in 
+\begin_inset Formula $O(\sqrt{m})$
+\end_inset
+
+ .
+ Say that an element in the second square does not satisfy its constraint,
+ this can be proven from 
+\begin_inset Formula $\sqrt{(m)}$
+\end_inset
+
+ elements in the corresponding column.
+ 
+\end_layout
+
+\begin_layout Subsection
+Proof of Uniqueness 
+\end_layout
+
+\begin_layout Standard
+Given all available elements are authenticated.
+ If it is possible to construct more than one element in the 
+\begin_inset Formula $ijth$
+\end_inset
+
+ index of any of 
+\begin_inset Formula $D$
+\end_inset
+
+, 
+\begin_inset Formula $F$
+\end_inset
+
+, 
+\begin_inset Formula $G$
+\end_inset
+
+, then an O(1) proof is given by presenting something like:
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula $(d_{00},0,0),x_{00}$
+\end_inset
+
+ , 
+\begin_inset Formula $(d_{00}^{'},0,0),x_{00}^{'}$
+\end_inset
+
+ , where 
+\begin_inset Formula $d_{00}\neq d_{00}^{'}$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+This means all values must be unique or a succinct fraud proof can be given.
+ 
+\end_layout
+
+\begin_layout Subsection
+Proof of Liveness 
+\end_layout
+
+\begin_layout Standard
+Given points 8.1, we can prove liveness.
+\end_layout
+
+\begin_layout Standard
+Suppose all available elements of 
+\begin_inset Formula $D,F$
+\end_inset
+
+ satisfy the authentication constraints then: 
+\end_layout
+
+\begin_layout Standard
+If the data for a row 
+\begin_inset Formula $D_{i*}$
+\end_inset
+
+ is unavailable then:
+\end_layout
+
+\begin_layout Standard
+#available elements in 
+\begin_inset Formula $F_{i*}$
+\end_inset
+
+ 
+\begin_inset Formula $<\sqrt{m}$
+\end_inset
+
+ or equivalently:
+\end_layout
+
+\begin_layout Standard
+#unavailable elements in 
+\begin_inset Formula $F_{i*}$
+\end_inset
+
+ 
+\begin_inset Formula $>(k-1)\sqrt{m}$
+\end_inset
+
+ .
+ This implies:
+\end_layout
+
+\begin_layout Standard
+#unavailable or 
+\series bold
+unauthenticated
+\series default
+ elements in 
+\begin_inset Formula $G$
+\end_inset
+
+ 
+\begin_inset Formula $>(k-1)^{2}m$
+\end_inset
+
+ or equivalently:
+\end_layout
+
+\begin_layout Standard
+#available and 
+\series bold
+authenticated
+\series default
+ elements in 
+\begin_inset Formula $G$
+\end_inset
+
+ 
+\begin_inset Formula $<k^{2}m-(k-1)^{2}m=(2k-1)m$
+\end_inset
+
+ 
+\end_layout
+
+\begin_layout Standard
+Therefore a liveness check needs to ensure that more than 
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+
+\begin_inset Formula $(2k-1)m$
+\end_inset
+
+ elements of G are available and 
+\family default
+\series bold
+\shape default
+\size default
+\emph default
+\bar default
+\strikeout default
+\uuline default
+\uwave default
+\noun default
+\color inherit
+authenticated
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+ with a high likelihood.
+ If this be the case, we can reconstruct some dataset D.
+ 
+\end_layout
+
+\begin_layout Subsection*
+Collaborative Generation 
+\end_layout
+
+\begin_layout Standard
+\align center
+\begin_inset Tabular
+<lyxtabular version="3" rows="5" columns="6">
+<features tabularvalignment="middle">
+<column alignment="center" valignment="top">
+<column alignment="center" valignment="top">
+<column alignment="center" valignment="top">
+<column alignment="center" valignment="top">
+<column alignment="center" valignment="top">
+<column alignment="center" valignment="top">
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\series bold
+\begin_inset Formula $(d_{00},0,0),w_{00}),w_{w_{00}}$
+\end_inset
+
+
+\series default
+ 
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $(d_{01},0,1),x_{01}$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $(d_{02},0,2),x_{02}$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $(f_{00},0,0),y_{00}$
+\end_inset
+
+ 
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $(f_{01},0,1),y_{01}$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $(f_{02},0,2),y_{02}$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $(d_{10},1,0),x_{10}$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $(d_{11},1,1),x_{11}$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $(d_{12},1,2),x_{12}$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $(f_{10},1,0),y_{10}$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $(f_{11},1,1),y_{11}$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $(f_{12},1,2),y_{12}$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $(g_{00},0,0),z_{00}$
+\end_inset
+
+ 
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $(g_{01},0,1),y_{01}$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $(g_{02},0,2),y_{02}$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $(g_{10},1,0),y_{10}$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $(g_{11},1,1),y_{11}$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $(g_{12},1,2),y_{12}$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $(g_{20},2,0),y_{20}$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" bottomline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $(g_{21},2,1),y_{21}$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" bottomline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $(g_{22},2,2),y_{22}$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+</row>
+</lyxtabular>
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Doable each person computes row witnesses, 
+\end_layout
+
+\begin_layout Standard
+Someone then computes a column witness, 
+\end_layout
+
+\begin_layout Standard
+Someone then computes the row witnesses.
+ 
+\end_layout
+
+\begin_layout Standard
+Fault attribution is easy.
+ 
+\end_layout
+
+\begin_layout Standard
+Slashing is fairly easy, just slash main guy unless he gives name of wrong
+ doer.
+ 
+\end_layout
+
+\begin_layout Subsection
+Other 
+\end_layout
+
+\begin_layout Standard
+A note - instead of bilinear accumulator, one can create certificates using
+ merkle branches, and this would be quantum resistant but decrease the concrete
+ efficiency.
+ The security assumption of this scheme relies on the discrete log Assumption.
+ 
+\end_layout
+
+\begin_layout Subsection
+Strategy
+\end_layout
+
+\begin_layout Standard
+We now need only find an efficient strategy for proving that 90% of block
+ data is available.
+ 
 \end_layout
 
 \begin_layout Section*
@@ -2376,10 +3554,6 @@ only
 \begin_inset VSpace medskip
 \end_inset
 
-
-\end_layout
-
-\begin_layout Standard
 
 \end_layout
 
