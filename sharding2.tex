@@ -1,0 +1,1173 @@
+%% LyX 2.2.3 created this file.  For more info, see http://www.lyx.org/.
+%% Do not edit unless you really know what you are doing.
+\documentclass[english]{article}
+\usepackage[T1]{fontenc}
+\usepackage{float}
+\usepackage{booktabs}
+\usepackage{units}
+\usepackage{textcomp}
+\usepackage{url}
+\usepackage{amssymb}
+\usepackage[authoryear]{natbib}
+
+\makeatletter
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% LyX specific LaTeX commands.
+%% Because html converters don't know tabularnewline
+\providecommand{\tabularnewline}{\\}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% User specified LaTeX commands.
+\usepackage[final]{nips_2016}
+
+% to compile a camera-ready version, add the [final] option, e.g.:
+% \usepackage[final]{nips_2016}
+
+%\usepackage[utf8]{inputenc} % allow utf-8 input
+%\usepackage[T1]{fontenc}    % use 8-bit T1 fonts
+\usepackage{hyperref}       % hyperlinks
+\usepackage{url}            % simple URL typesetting
+\usepackage{booktabs}       % professional-quality tables
+\usepackage{amsfonts}       % blackboard math symbols
+\usepackage{nicefrac}       % compact symbols for 1/2, etc.
+\usepackage{microtype}      % microtypography
+
+\makeatother
+
+\usepackage{babel}
+\begin{document}
+
+\title{Maxima - A Fast Fearless Secure Sharded Block-Chain}
+
+\author{Maximilian E.~Chamberlin\\
+ MA (Oxford) M.Phil (Cambridge)\\
+ Maxima Organisation \\
+ \texttt{mec@Maxima.org} \\
+}
+\maketitle
+\begin{abstract}
+Recently, high demand and limited scalability have increased the average
+transaction times and fees in popular cryptocurrencies, yielding an
+unsatisfactory experience. Here we introduce Maxima a cryptocurrency
+with a sharded block-chain, one where the network is divided into
+partitions called shard which maintain their own blocks. 
+
+In Maxima, validator committees are sampled for each shard.\textbf{
+}Validators vote on the availability of blocks to the network, and
+are shuffled off shards very quickly. Once a committee has determined
+if a block is accessible to nodes on a shard, nodes on that shard
+execute the transactions and verify the blocks validity- producing
+a succint fraud proof if the block is invalid. Cross shard transactions
+are managed using tools from distributed systems, like locks and yanks. 
+
+Maxima is a globally distributed computer that is secure under an
+honest majority assumption, and puts in place mechanisms to prevent
+adaptive adversaries from corrupting the network. With 20 shards,
+Maxima is projected to process over 20,000 transactions per second. 
+\end{abstract}
+
+\part{Introduction}
+
+\section{Motivation and Outline}
+
+In Bitcoin, blocks are added to the block-chain approximately every
+10 minutes, at a relatively fixed pace that results in a TPS of 5-7.
+Simple solutions to expanding the capacity of the block-chain have
+found natural limits to their efficacy: enlarging blocks runs up against
+user bandwidth limits; hastening the rate at which blocks are mined
+increases orphaning. 
+
+A more promising solution to the problem of scaling is to run separate
+chains that process transactions within partitions of the network,
+called shards. The key challenges are: (1) how to manage the communication
+between the different shards, a problem which is closely related to
+ensuring the atomicity of transactions in a distributed system and
+(2) how to run these many separate block-chains in a way that does
+not compromise on security, since each shard-chain will only have
+a fraction of the mining/validation power of the network.
+
+In this paper, we propose mechanisms to ensure the atomicity of transactions
+and to ensure that the security of separate chains is not compromised.
+We adopt an honest majority assumption for the network, assuming fewer
+than a fraction $f$ of 0.25 nodes are Byzantine. Note $f=0.25$ is
+an arbitrary constant bounded below 1/3 to ensure good constants.
+We also put in place safe-guards against adaptive adversaries who
+may bribe network participants. 
+
+With this in mind, our protocol can be described below. Validator
+committees are sampled for each shard. Sampling validators randomly
+means that with a sufficient number (400) we can ensure an honest
+majority of 2/3 of per shard almost surely. 
+
+Validators then vote on the availability of blocks to the network,
+and are shuffled off shards very quickly. This fast shuffling is to
+ensure that an adaptive adversary does not have the time to find and
+corrupt the validators of each shard. Because of this fast shuffling,
+the work that a validator can perform must be very minimal. Validators
+check that the data corresponding to the Merkle root of a block is
+accessible to a shard, so that the members of a shard can execute
+those transactions. If there is a dispute about transaction execution,
+validators also resolve disputes by considering succinct proofs of
+invalid execution. Cross shard transactions are managed using tools
+from distributed systems, like yanks, to ensure that transactions
+can be executed atomically. 
+
+\section*{Message Passing}
+
+Message Passing is the facvoured approach for concurrency control
+in distributed systems. 
+
+We use a message passing model based on Erlang, which has a simple
+implementation of CSP (Communicating Sequential Processes) where soft-threads
+(threads) have each a single mailbox that can receive messages. The
+soft-thread can pop off and react to messages in its mailbox, also
+supporting some form of pattern matching for prioritization. 
+
+Contracts are like the threads of execution and we have a single mailbox
+per contract. Conceptually message passing is simple, it is no different
+from running the transaction, but with updated data, but with a special
+message type to distinguish it from ordinary data. Howeever, the only
+difference will be in the accumulation of messages. Validators bundle
+up the messages and feed them in as data to the contract, which can
+then pop messages off and react to them. Diagramatically, we could
+envidage something like this. 
+
+This introduces few overheads to the protocol, since popping off is
+just a data operation, which can be defined in the main-loop of any
+contract.
+
+\medskip{}
+
+\begin{tabular}{|c||c||c||c|}
+\hline 
+\multicolumn{1}{|c|}{} & \multicolumn{1}{c|}{$S_{1}$} & $S_{2}$ & $S_{3}$\tabularnewline
+\hline 
+\hline 
+$t_{0}$ & $M_{1}$ to $C_{1}$ on $S_{3}$ on chain &  & \tabularnewline
+ &  Sent to $S_{2}$ by val &  & \tabularnewline
+\hline 
+\hline 
+$t_{2}$ &  & $M_{2}$ to $C_{1}$ on $S_{3}$ on chain & \tabularnewline
+ &  & Sent to $S_{2}$ by val & \tabularnewline
+\hline 
+\hline 
+$t_{3}$ &  &  & Actor bundles $M_{1}$ and $M_{2}$ \tabularnewline
+$t_{4}$ &  &  & $[M_{2},M_{1}]$ validated against Mroot\tabularnewline
+ &  &  & $C_{1}$ reads {[}$M_{2},M_{1}${]}\tabularnewline
+\hline 
+\end{tabular}
+
+\medskip{}
+
+We now talk about guarantees in our message passing model: 
+
+\textbf{Availability}: 
+
+A pertinent question arises: \textbf{what mechanism ensures that a
+messag}e on one shard makes its way over to a message on another shard?
+We charge the validators on Shard1 and Shard2, with disseminating
+the information to the third shard. Since there are approximately
+400 validators per shard, this large number ensures that with very
+high likelihood $1-(\frac{1}{3})^{400}$, that a message will get
+through. Certainly a message will get through eventually, if we take
+it that shards might be DOS'd. The message is sent with a transaction
+fee, and the transaction fee is split between block miners on both
+shards. In fact shards will periodically relay the message until it
+is included in a shard. 
+
+\textbf{At Once:}
+
+Each message contains a signed nonce, which ensures that messages
+cannot be replayed. 
+
+\textbf{Message Ordering: }
+
+Messages sent directly from one shard to another will not be received
+out-of-order. 
+
+Shard S1 sends messages M1, M2, M3 to S2
+
+Actor S3 sends messages M4, M5, M6 to S2
+
+However, we do not provide guarantees about the ordering of messages
+between shards. 
+
+Furthermore, specific concurrency control mechanisms may be built
+ontop of message passing systems. For instance locking schemes and
+other such things. 
+
+\textbf{Other Concurrency Management}
+
+A question that emerges is what if the transaction fees are too low
+and it takes a long time for a message to be included on another shard?
+More broadly, should we be providing guarantees on message passing?
+We have provided a robust system, but we adopt the Erlang philosophy
+that we make the fallibility of communication explicit through message
+passing, and do not try to provide a leaky abstraction. Instead users
+can write implementations that provide guarantees on message delivery,
+and delegate these to higher level protocols.  This is a model that
+has been used with great success in Erlang and requires the users
+to design their applications around it. You can read more about this
+approach in the \textbf{Erlang documentation (section 10.9 and 10.10)}
+and Akka. 
+
+Another angle on this issue is that by providing only basic guarantees
+those use cases which do not need stronger reliability do not pay
+the cost of their implementation; it is always possible to add stronger
+reliability on top of basic ones
+
+On top of these other concurrency controls can be implemented in smart
+contracts, for instance various kinds of locking scheme. 
+
+\textbf{The specific case of sending money?} 
+
+\begin{tabular}{|c||c||c||c|}
+\hline 
+\multicolumn{1}{|c|}{} & \multicolumn{1}{c|}{$S_{1}$} & $S_{2}$ & $S_{3}$\tabularnewline
+\hline 
+\hline 
+$t_{0}$ & $M_{1}$ to $C_{1}$ on $S_{3}$ on chain &  & \tabularnewline
+ &  Sent to $S_{2}$ by val; deduct &  & \tabularnewline
+\hline 
+\hline 
+$t_{3}$ &  &  & Actor bundles $M_{1}$ and $M_{2}$ \tabularnewline
+$t_{4}$ &  &  & $[M_{2},M_{1}]$ validated against Mroot\tabularnewline
+ &  &  & $C_{1}$ reads {[}$M_{2},M_{1}${]}\tabularnewline
+\hline 
+\end{tabular}
+
+\section{Protocol Structure }
+
+The construction of our protocol depends on the following, relatively
+independent components, which can be subdivided into three themes:
+voting schemes; data creation and concurrency controls.
+
+\subsection{Core Sharding:}
+\begin{enumerate}
+\item Consensus:
+\begin{enumerate}
+\item Voting Scheme
+\item Validator register hub
+\item Validator Sampling and Shuffling
+\end{enumerate}
+\item Concurrency Controls
+\begin{enumerate}
+\item Locking State for Cross Shard Transactions
+\item Stateless Clients
+\end{enumerate}
+\end{enumerate}
+
+\subsection{Succinct Fraud Proofs }
+\begin{enumerate}
+\item Data Creation 
+\begin{enumerate}
+\item Block Creation 
+\item Data Availability Checking Through Erasure Codes
+\item Fraud Proofs
+\end{enumerate}
+\item Solving the State Problem 
+\begin{enumerate}
+\item \textbf{Introducing rental fees to the block-chain }
+\item \textbf{Building on top of IPFS}
+\end{enumerate}
+\end{enumerate}
+
+\section{Consensus}
+
+\textbf{A brief overview of the different consensus engines}
+
+One critique of proof of stake are that the economies of scale eventually
+lead to a few centralised stakers. This led to the adoption of delegated
+proof of stake. But with centralisation there is a good chance an
+actor can be bribed. More recently, consensus models have emerged
+that randomly sample participants from a global pool. Both Dfinity
+and Zilliqa have byzantine fault tolerant like algorithms that have
+O(n) communication complexity, enabling the scaling of ths algorithm
+to the order of 400 nodes.
+
+\textbf{Weighing up the benefits and disadvantages of our approach}
+
+There may be criticisms in that marginal incentives are not properly
+aligned in these schemes, compared with slashing proof of stake schemes
+like casper. However, as both rely on an honest majority assumption
+we deem them both as safe as each other. Slashing may also be introduced
+probabilistically to the Dfinity scheme as we will later show. Though
+we could also adopt the Zilliqa consensus algorithm, we adopt the
+Dfinity model for the simplicity of its algorithm which we outline
+here. 
+
+\textbf{Algorithm in depth}
+
+In Dfinity, the network is grouped into threshold relay groups. These
+groups are created through random sampling and have a size of about
+400. A random number is generated which selects the first relay group.
+These relay groups then sign on the random number to produce another
+random number and select the next relay group. The random number also
+selects a number of block proposers, and the blocks if valid may be
+signed by the current threshold relay group. This algorithm (with
+block proposers) and notaries who sign on blocks have similarities
+with PBFT schemes. Whereas PBFT commits only one block and forges
+consensus after a round fo prepare and commits, the Dfinity scheme
+may commit more than one block. Dfinity achieves its high speed and
+short block times exactly because notarization is not full consensus.
+However, notarization can be seen as optimistic consensus because
+it will frequently be the case that only one block gets notarized.
+Hence, whenever the broadcast network functions normally a transaction
+is final in the Dfinity consensus after two notarized confirmations
+plus a network traversal time. The notarization step makes it impossible
+for the adversary to build and sustain a chain of linked, notarized
+blocks in secret. For this reason, Dfinity does not suffer from the
+selfish mining attack {[}4{]} or the nothing-at-stake problem.
+
+\textbf{What are nodes voting on?}
+
+However, a key question here is: what precisely are the nodes voting
+on? In Maxima, nodes are not primarily running transactions - although
+they will in certain cases. They are instead checking that data is
+available for the network to test. This ensures that if a block is
+unavailable that some honest actor in the network may respond with
+a fraud proof and take the faulty block creator's deposit. Ultimately,
+we offload the actual checking of whether a block is correct or not
+to the network. This has a second advantage, by checking whether data
+is available, the committee
+
+\textbf{Slashing Conditions? }
+
+For all those who voted that a block is available, we require a random
+section of the group to reveal the data that they got from the network.
+If it
+
+
+\section{State Management}
+
+\textbf{Have an extra item of information-> owner. Once s1 is owner
+can do what ever he wants with it.}
+
+\section{cross shard communication}
+
+System is structured as a set of communicating processes, with no
+shared mutable state \textbullet{} All communication via exchange
+of messages \textbullet{} Messages are generally required to be immutable
+\textendash{} data conceptually copied between processes \textbullet{}
+Some systems use linear types to ensure messages are not referenced
+after they are sent, allowing mutable data to be safely transferred 
+
+\textbf{Shards forward sends...}
+
+\section{If we do away completely with state execution, then we don't need
+consensus guarantees just availability guarantees. }
+
+What if an unavailable block gets notarised. 
+
+\textbf{A further condition: Rewarding: All validators who vote automatically
+lose \pounds 50. They are rewarded when they have voted on a commit
+that is finalised,} but the slashing condition is far greater than...
+Slashing condition is 1/6 for failures because can't guarantee who
+dunn it. However, unlikely a group is censored. 
+
+Use a gossip protocol to cast messages. 
+
+\textbf{We rotate the proposer every view. The view is given globally,
+by the random beacon. }
+
+https://medium.com/@VitalikButerin/minimal-slashing-conditions-20f0b500fc6c
+
+https://github.com/ethereum/wiki/wiki/Proof-of-Stake-FAQ
+
+https://yoichihirai.com/minimal.pdf
+
+We shuffle validators using 
+
+\textbf{Have several hubs where the validators moneys are locked up.
+Post a slashing rule to those hubs to slash a validator, via a cross-chain
+transaction. Offline validators: validators are decommissioned after
+a set number of rounds. }
+
+Honest nodes only vote for one => can wait for a 2/3 
+
+We use multi-cast messages/ Gossip to relay all the votes. 
+
+\textbf{https://cseweb.ucsd.edu/\textasciitilde{}mihir/papers/multisignatures-ccs.pdf}
+
+\textbf{threshold signatures} are not necessary .... individually
+accountable. Just assume there is some honest node checking it. If
+it's false a fraud proof may be given. could even require a group
+signature of the individual sig. 
+
+\textbf{Slashing condition should be based on there being a valid
+proof of availability, consensus not necessary. }
+
+\part{Committee Selection}
+
+\textbf{Randomness is determined by BLS groups. }
+
+Consistency vs availability.It is worth noting that network splitsare
+implicitly detectable byDfinityand are handled conservatively.This
+is a consequence of the random sampling of committees. Ifthe network
+splits in two halves of more or less the same size,this will automatically
+cause the random beacon to pause withina few blocks so that none of
+the sides can continue. The randombeacon will automatically resume
+once the network reconnects. Ifthe network splits in a way that one
+component is significantlylarger than half of the network, the protocol
+may continue in thatone large component but will pause in all other
+components.
+
+Randomness fall-back.
+
+If we use dfinity style voting we get a huge increase in number of
+possible votes per round.... 
+
+Let unfortunate actors be slashed... if enough leave, then it is fine.
+Also a money flow chart? 
+
+Discussion: Yes can corrupt individual groups - 1/3. Q: how much time
+does that buy? 7 seconds {*}10 => \textbf{10 minutes to corrupt 10
+groups, not possible. }
+
+If 
+
+\textbf{Fail-safe: require 2 threshold groups to sign if not heard
+from old one in a few seconds. or the previous 3 if there is a dispute
+the other way. A method of escalation, which is a fail safe we hope
+will not be necessary. But nonetheless exists, in case of an adaptive
+adversary. Last party to vote gets slashed. }
+
+\textbf{Initially use POW block hashes with a small reward, limited
+to a group of chosen nodes based on the randomness, only needs next
+actor to generate next hash. Fast stream of random numbers generated?
+A problem is what happens if a random beacon group has been corrupted,
+we might say that 10\% are. The question is, can we have a group of
+groups? We can use time-lock puzzles to keep account of time. If a
+time-lock puzzle is solved before X, then... We also use time-lock
+canaries, so if anyone can solve the timelock too quickly, the difficulty
+is increased. If a time-lock puzzle is generated before the random
+number is generated, hey presto we are done. We could use a program
+like tinyram to build a succinct proof, which may take longer than
+the hashing itself. }
+
+\textbf{Quick block sizes, even if they can do this in a few seconds
+our assumption is that they can't use this time-frame to bribe the
+next group/ groups in the allowed time-frame. }
+
+\textemdash \textemdash \textemdash \textemdash \textemdash >
+
+
+\section{Achieving Fork-Free Consensus}
+
+Fork-free protocols typically use BFT style algorithms. These are
+systems where a vote for a block consists of a prepare followed by
+a commit. They have been modified in recent times to create significant
+improvements. 
+\begin{enumerate}
+\item The PBFT modification - have a leader who aggregates votes to improve
+efficiency
+\item Subsample from the entire population so many validators are voting
+but not all (in Zilliqa, they use X). If say 400 participants are
+voting and we assume that f<25\% are byzantine. We can show that the
+probability more than 2/3 of those voting are also byzantine is less
+than the number of atoms in the universe. 
+\item Ensure the right kind of marginal incentive structures exist. One
+can dot his by using a system similar to Caspar slashing conditions.
+Not only does this act as a deterrent, but will also be a key sign
+of bribary that could lead up to a social consensus step. 
+\item Selecting the participants randomly and quickly, using DFinity stuyle
+consensus. 
+\end{enumerate}
+
+\section{Separating Validity checking from State Execution}
+\begin{itemize}
+\item Key to security is fast shuffling. This means that the excutors can't
+do a lot. 
+\item They attest to availability of blocks, fixed if others agree not so
+if others disagree. 
+\end{itemize}
+
+\section{Execution disputes and Validity}
+\begin{itemize}
+\item Block creaters order and create transactions. The creators are sampled
+randomly from afixed set. 
+\item They need a way of determining whether a transaction can pay them
+the gas to run the TX, and also if the ordering of transactions is
+correct. 
+\item They need to do this without having access to all the state.
+\item Light clients can store all this information, and transactions need
+to include access lists of data that they need. 
+\item Zero knowledge proofs that I have the gas needed. 
+\item Q: how can a transaction determine if two things are blocking. Just
+create a merkle tree that tracks these things. 
+\item We can use a multi-dimensional eraure code to determine quickly if
+some data is available. 
+\item Key to security is fast shuffling. This means that the excutors can't
+do a lot. They can't maintain state on each shard. 
+\end{itemize}
+Blocks are created within each shard, and the merkle root is signed
+on and shared with other shards. The question we now have is this? 
+
+(1) How can we ensure that all of the data contained within a shard
+is available to all members of the shard?
+
+(2) Given that data isavailable, this means anyone can report flaws.
+
+The question is how can we prove that a block is available? 
+
+One could require a majority of half the sampled validators perform
+availability checks and then sign off on the availability of a root. 
+
+Question is how can we feed in the right marginal incentives? 
+\begin{itemize}
+\item Have rewards for attesting yes, but with penalties if they don't have
+proof they checked for data availability. This means nodes are incentivised
+to say yes if they do have the data, but won't declare yes if they
+don't and know others won't check them. small reward for saying no. 
+\item randomly check availables for a reveal, with sufficinelty high penalty
+that makes lying unprofitable. Also allow challenges for those who
+know ing wrong. For those who don't require a random reveal with sufficiently
+high penalties. => say that a person has 10 blocks to do so before
+being slashed. 
+\item unavailable|available are losing their rewards 
+\end{itemize}
+If they are aware many other people do not have access to the data,
+they may vote yes anyway. 
+
+\textbf{However, we don't want validators to have to actualy execute
+the state. This would take too long. }
+\begin{enumerate}
+\item How can we resolve this issue? Ethereum uses Truebit, which takes
+the form of an interactive verification game. The main issue with
+truebit is that it requires multiple rounds of verification and thus
+can result in low latency in cases where there is a dispute. 
+\item The approach that we take is to erasure encode the trace of the execution.
+We use a 3d erasure encoding to ensure that the fraud proofs are of
+a size cube-root(n). 
+\item Again using sampling techniques, we can assign validators to each
+transaction. 
+\end{enumerate}
+
+\section*{Randomness:}
+
+\section*{Self-Authenticating Erasure Codes }
+
+We want validators to be able to guarantee that honest nodes can access
+data on the network, or stated more succinctly that \textbf{data is
+available}. A simple way for validators to check that data is available
+is to download a whole block. So, in the current scheme we would sample
+a set of validators - say 400, which is enough to guarantee an honest
+majority of participants. Then all of these shards would attempt to
+download the data from the network, and finaly take a vote between
+themselves on whether the data is available. 
+
+However, to increase efficiency, we would like to use a scheme where
+each validator need not download the entire block. If blocks were
+really large, say GB sized, which would be ideal for scalability,
+it may be impractical to have validators enter a shard and download
+multiple blocks to verify availability.
+
+We can avoid this, if we take a sampling approach. However, validators
+will not sample directly from the block itself, but instead will sample
+from an erasure code. 
+
+Why do we want validators to check that data is available for a block?
+If the data for a block is available to the network, this means that
+honest executors on a shard can check to see if there are any faults
+with it and produce succint fraud proofs, O(1) sized proofs that a
+block contains invalid data. 
+
+What this ultimately means is that executors on a shord can check
+to see if 
+
+We don't actually want the validators to perform the executions themselves
+because doing so would take too long for large blocks of for transactions
+that take a long tiem to execute. 
+\begin{itemize}
+\item N - the number of verifiers
+\item P - the number of checks made by each client 
+\item Denot
+\end{itemize}
+Collectively N verifiers want to check a block of size M is available.
+They wish to do so without 
+
+\section{Construction}
+
+The below is inefficient. If we have a row of root(m) values , we
+can recompute the entire row from that. To do a fraud proof, we still
+need to authenticate the column. What if we don't have a column value?
+So this still requires availability of some values to prove consistency,
+but we may not have those values. 
+
+\subsection{Glossary }
+
+\textbf{K }- The expansion factor of each read solomon code
+
+Let $D_{ij},F_{ij},G_{ij}$ represent the data int he first, second
+and third squares respectively
+
+$x$,$y$,$z$ are respectively the bilinear accumulator constants
+for the committed values
+
+\textbf{First Square:}
+
+Let $d_{ij}$ represent chunk $i,j$ of the original data
+\begin{itemize}
+\item $x_{ij}$ is the bilinear accumulator witness for the tuple $(d_{ij},i,j)$,
+that is $e[(d_{ij},i,j),x_{ij}]=x$
+\item $D_{ij}$ represent $(d_{ij},i,j),x_{ij}$
+\end{itemize}
+\textbf{Second Square:}
+\begin{itemize}
+\item Let $f_{ij}$ represent the $j$ th evaluation point in the erasure
+code for row $D_{i*}$
+\item $y_{ij}$ is the bilinear accumulator witness for the tuple $(f_{ij},i,j)$,
+that is $e[(f_{ij},i,j),y_{ij}]=y$
+\item $F_{ij}$ represent $(f_{ij},i,j),y_{ij}$
+\end{itemize}
+\textbf{Third Square:}
+\begin{itemize}
+\item Let $g_{ij}$ represent the $i$ th evaluation point in the erasure
+code for column $F_{*j}$
+\item $z_{ij}$ is the bilinear accumulator witness for the tuple $(g_{ij},i,j)$,
+that is $e[(g_{ij},i,j),z_{ij}]=z$
+\item $G_{ij}$ represent $(g_{ij},i,j),z_{ij}$
+\end{itemize}
+An example is given below with K =2/3:
+
+\textbf{Definition}: for an element $G_{ij}=(g_{ij},i,j),z_{ij}$
+to be \textbf{available}, an honest participant of the network must
+have access to it and it must be authenticated, so the following constraint
+holds: $e[(g_{ij},i,j),z_{ij}]=z$. 
+\begin{center}
+\begin{tabular}{cc|ccc|}
+\hline 
+\multicolumn{1}{|c}{$(d_{00},0,0),x_{00}$ } & $(d_{01},0,1),x_{01}$ & $(f_{00},0,0),y_{00}$  & $(f_{01},0,1),y_{01}$ & $(f_{02},0,2),y_{02}$\tabularnewline
+\multicolumn{1}{|c}{$(d_{10},1,0),x_{10}$} & $(d_{11},1,1),x_{11}$ & $(f_{10},1,0),y_{10}$ & $(f_{11},1,1),y_{11}$ & $(f_{12},1,2),y_{12}$\tabularnewline
+\hline 
+ &  & $(g_{00},0,0),z_{00}$  & $(g_{01},0,1),z_{01}$ & $(g_{02},0,2),z_{02}$\tabularnewline
+ &  & $(g_{10},1,0),z_{10}$ & $(g_{11},1,1),z_{11}$ & $(g_{12},1,2),z_{12}$\tabularnewline
+ &  & $(g_{20},2,0),z_{20}$ & $(g_{21},2,1),z_{21}$ & $(g_{22},2,2),z_{22}$\tabularnewline
+\cline{3-5} 
+\end{tabular}
+\par\end{center}
+
+\medskip{}
+
+\subsection{Authentication/Availability Transitivity }
+
+If a set of values $X$ in an erasure code are available, and can
+reproduce some data $Y$, then if $y$$\in$Y is not authenticated
+this can be proven in $O(\sqrt{m})$ steps. The authentication transitivity
+assumption is this : unless an $O(\sqrt{(m)})$ fraud proof is given
+by the network: then if $X$ is available and produces Y, Y must be
+authenticated and thus available. 
+
+\subsection{Proof of Uniqueness }
+
+Since all available elements are authenticated. If it is possible
+to construct more than one element in the $ijth$ index of any of
+$D$, $F$, $G$, then an O(1) proof is given by presenting something
+like:
+
+$(d_{00},0,0),x_{00}$ , $(d_{00}^{'},0,0),x_{00}^{'}$ , where $d_{00}\neq d_{00}^{'}$
+
+This means if two distinct items are unavailable a succinct fraud
+proof can be given. 
+
+\subsection{Proof of Liveness }
+
+Given points 8.1, we can prove liveness.
+
+Suppose no authentication fraud proof is given by the network, then: 
+
+If the data for a row $D_{i*}$ is unavailable then: (by authentication
+transitivity)
+
+\#available elements in $F_{i*}$ $<\sqrt{m}$ or equivalently:
+
+\#unavailable elements in $F_{i*}$ $>(k-1)\sqrt{m}$ . This implies:
+
+\#unavailable elements in $G$ $>(k-1)^{2}m$ or equivalently: (by
+authentication transitivity)
+
+\#available elements in $G$ $<k^{2}m-(k-1)^{2}m=(2k-1)m$ 
+
+Therefore a liveness check needs to ensure that more than $(2k-1)m$
+elements of G are available with a high likelihood. If this be the
+case, we can reconstruct some dataset D. 
+
+\subsection*{Collaboratively Generated Erasure Codes}
+
+Collaborative generation, check two merkle roots. 
+\begin{center}
+\begin{tabular}{|c|c|cccc}
+\hline 
+\multicolumn{1}{|c}{\textbf{$(d_{00},0,0),x_{00}$} } & $(d_{01},0,1),x_{01}$ & $(f_{00},0,0),y_{00}$  & $(f_{01},0,1),y_{01}$ & \multicolumn{1}{c|}{$(f_{02},0,2),y_{02}$} & \tabularnewline
+\multicolumn{1}{|c}{$(d_{10},1,0),x_{10}$} & $(d_{11},1,1),x_{11}$ & $(f_{10},1,0),y_{10}$ & $(f_{11},1,1),y_{11}$ & \multicolumn{1}{c|}{$(f_{12},1,2),y_{12}$} & \tabularnewline
+\hline 
+\multicolumn{1}{|c}{$x_{0*,}\bar{x}_{0*}$} & $x_{1*,}\bar{x}_{1*}$ & f & f & \multicolumn{1}{c|}{f} & \tabularnewline
+\hline 
+ &  & $(g_{00},0,0),z_{00}$  & $(g_{01},0,1),z_{01}$ & $(g_{02},0,2),z_{02}$ & $z_{0*},\bar{z_{0*}}$\tabularnewline
+\cline{1-2} 
+ &  & $(g_{10},1,0),z_{10}$ & $(g_{11},1,1),z_{11}$ & $(g_{12},1,2),z_{12}$ & $z_{*1},\bar{z_{*1}}$\tabularnewline
+\cline{1-2} 
+ &  & $(g_{20},2,0),z_{20}$ & $(g_{21},2,1),z_{21}$ & $(g_{22},2,2),z_{22}$ & $z_{*2},\bar{z_{*2}}$\tabularnewline
+\hline 
+ &  &  &  &  & \tabularnewline
+\cline{1-2} 
+ &  &  &  &  & \tabularnewline
+\cline{1-2} 
+ &  &  &  &  & \tabularnewline
+\cline{1-2} 
+ &  &  &  &  & \tabularnewline
+\cline{1-2} 
+\end{tabular}
+\par\end{center}
+
+What are the implications to censoring of codes created by trust scores?
+Competition amongst many sellers with high trust rating, think amazon.
+So should not degenerate to a one proposer model. Anyone can build
+up trust.\textbf{ So then partly depends on fee, could also require
+to rotate proposers. }
+
+
+\subsection{Another note, if the attackers bandwidth is absorbed he can't respond
+to all the requests, so would need just more than the attackers bandwidth,
+which will be much less than gigabytes..with gigabyte sized blocks...
+still a bit rickety. }
+
+\subsection{Attacks against Dfinity }
+
+DKG for threshold groups registered on main chain.
+
+New threshold group is selected every round using the randomness produced. 
+
+One idea would just be to select the next threshold group if after
+a period of a few blocks, the threshold group has not responded. 
+
+\textbf{Practical}: Not possible for an attacker to catch up with
+threshold relay... Therefore, can't get people in advance. What if
+he stalls a relay. Then we need a fall-back mechanism, then it's ok. 
+
+\subsection{Other }
+
+\textbf{The whole point of an erasure code is that:}
+
+\textbf{(1) I can check all blocks for myself as long as the light
+client assumption holds}
+
+\textbf{(2) Reduces the amount of checking for everyone and utilises
+a fraud proof mechanism}
+
+\textbf{(3) without erasure codes we must rely on just consensus,
+which may not be enough for a sharded block-chain }
+
+\textbf{(4)}
+
+\section*{Data Availability, State Execution and fast shuffling}
+
+\section*{Randomness:}
+
+\section*{Virtual Machine - Web Assembly? }
+
+(1) Transpilers ; (2) 
+
+The first question we should ask of the architecture is the nature
+of forks. Should a sharded-block-chain be fork-free? 
+
+Dfinity overview:
+\begin{itemize}
+\item Random number generation to select block maker and notarisation group
+\item Notarization proves that a block has been published at some time,
+based on a group vote.
+\item Notarisation is more secure than a single vote. => Finality after
+two rounds.
+\item \textbf{Kind of taking a hybrid approach pBft and block based consensus. }
+\item Good: \textbf{notarization in Dfinity is not primarily a validity
+guarantee but rather a timestamp plus a proof of publication' }
+\item \textbf{Good: almost fork-free; Good: still uses probabilistic consensus;
+Prevents long-range stake attacks}
+\end{itemize}
+Neo:
+\begin{itemize}
+\item Delegated Proof of Stake. 
+\item Finality after a single round. Why based on voting. 
+\end{itemize}
+Zilliqa:
+\begin{itemize}
+\item Sampling into shards. 
+\item Honest majority assumotio + PBFT, much more robust. 
+\item \textbf{Good: Uses random sampling so robust vopting groups;}
+\item \textbf{Bad: no slashable conditions. }
+\end{itemize}
+Ethereum: 
+\begin{itemize}
+\item Splitting problems of availability from validity?
+\item Availability can be decided quickly. 
+\item Validity decided by a kind of Trubit systle mechanism, which means
+validity can then be checked quickly.
+\end{itemize}
+Our Approach:
+\begin{itemize}
+\item Solve availability:
+
+\begin{itemize}
+\item Block-chain based .. check the last 25 nodes for availability by downloading
+\item dfinity based.. similar, perhaps more robust. 
+\item Proof based: Present a proof of data availability, i.e erasure coding
+a block and getting signatures from half of validators
+\item Validators need only sign a hash, so the amount of work is constant{*}
+number of shards. 
+\item \textbf{Putting accountability into dfinity, all one needs is a numnber
+that gets revealed after the event. }
+\item \textbf{Q: How do we put in place marginal rewards on voting}
+\item \textbf{A1: }You sample a set of nodes to vote for availability, say
+400; each round secret number per user, they need to compute a number
+based on this with their vote. ==> they have checked...
+\item \textbf{a1}: Lying is just contradicti9ng the majority... study largest
+block reversions in bitcoin... 
+\item \textbf{want key shares to be revealed dfinity style. }
+\item \textbf{A2: deposit into the chains to validate them, withdraw out
+when you can. }
+\end{itemize}
+\item Solve validity
+\item truebit style execution 
+
+\begin{itemize}
+\item main disadvantage is the interactivity. 
+\item one can imagine erasure codign execution steps to find efficient fraud
+proofs
+\item \textbf{Instead of a trubeit style verification game, one can just
+introduce hash check-points in compuitation. This reduces interactivity
+to 2 rounds, while keeping the amount of work done linear in the program
+size and }
+\end{itemize}
+\item Ensure that consensus is fork-free, fast and robust
+\end{itemize}
+\textbf{There is a new style file for papers submitted in 2016!}
+
+NIPS requires electronic submissions. The electronic submission site
+is 
+
+\begin{center}
+\url{https://cmt.research.microsoft.com/NIPS2016/} 
+\par\end{center}
+
+Please read carefully the instructions below and follow them faithfully.
+
+\subsection{Style}
+
+Papers to be submitted to NIPS 2016 must be prepared according to
+the instructions presented here. Papers may only be up to eight pages
+long, including figures. Since 2009 an additional ninth page \emph{containing
+only acknowledgments and/or cited references} is allowed. Papers that
+exceed nine pages will not be reviewed, or in any other way considered
+for presentation at the conference.
+
+The margins in 2016 are the same as since 2007, which allow for $\sim$$15\%$
+more words in the paper compared to earlier years.
+
+Authors are required to use the NIPS \LaTeX{} style files obtainable
+at the NIPS website as indicated below. Please make sure you use the
+current files and not previous versions. Tweaking the style files
+may be grounds for rejection.
+
+\subsection{Retrieval of style files}
+
+The style files for NIPS and other conference information are available
+on the World Wide Web at 
+
+\begin{center}
+\url{http://www.nips.cc/} 
+\par\end{center}
+
+The file \texttt{nips\_2016.pdf} contains these instructions and illustrates
+the various formatting requirements your NIPS paper must satisfy.
+
+The only supported style file for NIPS 2016 is \texttt{nips\_2016.sty},
+rewritten for \LaTeXe{}. \textbf{Previous style files for \LaTeX{}
+2.09, Microsoft Word, and RTF are no longer supported!}
+
+The new \LaTeX{} style file contains two optional arguments: \texttt{final},
+which creates a camera-ready copy, and \texttt{nonatbib}, which will
+not load the \texttt{natbib} package for you in case of package clash.
+
+At submission time, please omit the \texttt{final} option. This will
+anonymize your submission and add line numbers to aid review. Please
+do \emph{not} refer to these line numbers in your paper as they will
+be removed during generation of camera-ready copies.
+
+The file \texttt{nips\_2016.tex} may be used as a ``shell'' for
+writing your paper. All you have to do is replace the author, title,
+abstract, and text of the paper with your own.
+
+The formatting instructions contained in these style files are summarized
+in Sections \ref{gen_inst}, \ref{headings}, and \ref{others} below.
+
+\section{General formatting instructions}
+
+\label{gen_inst}
+
+The text must be confined within a rectangle 5.5~inches (33~picas)
+wide and 9~inches (54~picas) long. The left margin is 1.5~inch
+(9~picas). Use 10~point type with a vertical spacing (leading) of
+11~points. Times New Roman is the preferred typeface throughout,
+and will be selected for you by default. Paragraphs are separated
+by $\nicefrac{1}{2}$~line space (5.5 points), with no indentation. 
+
+The paper title should be 17~point, initial caps/lower case, bold,
+centered between two horizontal rules. The top rule should be 4~points
+thick and the bottom rule should be 1~point thick. Allow $\nicefrac{1}{4}$~inch
+space above and below the title to rules. All pages should start at
+1~inch (6~picas) from the top of the page.
+
+For the final version, authors' names are set in boldface, and each
+name is centered above the corresponding address. The lead author's
+name is to be listed first (left-most), and the co-authors' names
+(if different address) are set to follow. If there is only one co-author,
+list both author and co-author side by side.
+
+Please pay special attention to the instructions in Section \ref{others}
+regarding figures, tables, acknowledgments, and references.
+
+\section{Headings: first level}
+
+\label{headings}
+
+All headings should be lower case (except for first word and proper
+nouns), flush left, and bold.
+
+First-level headings should be in 12-point type.
+
+\subsection{Headings: second level}
+
+Second-level headings should be in 10-point type.
+
+\subsubsection{Headings: third level}
+
+Third-level headings should be in 10-point type.
+
+\paragraph{Paragraphs}
+
+There is also a \texttt{\textbackslash{}paragraph} command available,
+which sets the heading in bold, flush left, and inline with the text,
+with the heading followed by 1\,em of space.
+
+\section{Citations, figures, tables, references}
+
+\label{others}
+
+These instructions apply to everyone.
+
+\subsection{Citations within the text}
+
+The \texttt{natbib} package will be loaded for you by default. Citations
+may be author/year or numeric, as long as you maintain internal consistency.
+As to the format of the references themselves, any style is acceptable
+as long as it is used consistently.
+
+The documentation for \texttt{natbib} may be found at 
+
+\begin{center}
+\url{http://mirrors.ctan.org/macros/latex/contrib/natbib/natnotes.pdf} 
+\par\end{center}
+
+Of note is the command \texttt{\textbackslash{}citet}, which produces
+citations appropriate for use in inline text. For example, 
+
+\noindent \begin{verbatim}
+
+   \citet{hasselmo} investigated\dots
+
+\end{verbatim}
+
+\noindent produces 
+\begin{quote}
+Hasselmo, et al.\ (1995) investigated\dots{}
+\end{quote}
+If you wish to load the \texttt{natbib} package with options, you
+may add the following before loading the \texttt{nips\_2016} package: 
+
+\noindent \begin{verbatim}
+
+   \PassOptionsToPackage{options}{natbib}
+
+\end{verbatim}
+
+\noindent If \texttt{natbib} clashes with another package you load,
+you can add the optional argument \texttt{nonatbib} when loading the
+style file: 
+
+\noindent \begin{verbatim}
+
+   \usepackage[nonatbib]{nips_2016}
+
+\end{verbatim}
+
+\noindent As submission is double blind, refer to your own published
+work in the third person. That is, use ``In the previous work of
+Jones et al.\ {[}4{]},'' not ``In our previous work {[}4{]}.''
+If you cite your other papers that are not widely available (e.g.,
+a journal paper under review), use anonymous author names in the citation,
+e.g., an author of the form ``A.\ Anonymous.''
+
+\subsection{Footnotes}
+
+Footnotes should be used sparingly. If you do require a footnote,
+indicate footnotes with a number\footnote{Sample of the first footnote.}
+in the text. Place the footnotes at the bottom of the page on which
+they appear. Precede the footnote with a horizontal rule of 2~inches
+(12~picas).
+
+Note that footnotes are properly typeset \emph{after} punctuation
+marks.\footnote{As in this example.}
+
+\subsection{Figures}
+
+All artwork must be neat, clean, and legible. Lines should be dark
+enough for purposes of reproduction. The figure number and caption
+always appear after the figure. Place one line space before the figure
+caption and one line space after the figure. The figure caption should
+be lower case (except for first word and proper nouns); figures are
+numbered consecutively.
+
+You may use color figures. However, it is best for the figure captions
+and the paper body to be legible if the paper is printed in either
+black/white or in color. 
+\begin{figure}[H]
+\centering{} \fbox{\rule[-0.5cm]{0cm}{4cm} \rule[-0.5cm]{4cm}{0cm}}
+\caption{Sample figure caption.}
+\end{figure}
+
+\subsection{Tables}
+
+All tables must be centered, neat, clean and legible. The table number
+and title always appear before the table. See Table~\ref{sample-table}.
+
+Place one line space before the table title, one line space after
+the table title, and one line space after the table. The table title
+must be lower case (except for first word and proper nouns); tables
+are numbered consecutively.
+
+Note that publication-quality tables \emph{do not contain vertical
+rules.} We strongly suggest the use of the \texttt{booktabs} package,
+which allows for typesetting high-quality, professional tables: 
+
+\begin{center}
+\url{https://www.ctan.org/pkg/booktabs} 
+\par\end{center}
+
+This package was used to typeset Table~\ref{sample-table}.
+
+\begin{table}[t]
+\centering{}\caption{Sample table title}
+\label{sample-table} %
+\begin{tabular}{lll}
+\toprule 
+\multicolumn{2}{c}{Part} & \tabularnewline
+\midrule 
+Name  & Description  & Size ($\mu$m) \tabularnewline
+\midrule 
+Dendrite  & Input terminal  & $\sim$100 \tabularnewline
+Axon  & Output terminal  & $\sim$10 \tabularnewline
+Soma  & Cell body  & up to $10^{6}$ \tabularnewline
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Final instructions}
+
+Do not change any aspects of the formatting parameters in the style
+files. In particular, do not modify the width or length of the rectangle
+the text should fit into, and do not change font sizes (except perhaps
+in the \textbf{References} section; see below). Please note that pages
+should be numbered.
+
+\section{Preparing PDF files}
+
+Please prepare submission files with paper size ``US Letter,'' and
+not, for example, ``A4.''
+
+Fonts were the main cause of problems in the past years. Your PDF
+file must only contain Type 1 or Embedded TrueType fonts. Here are
+a few instructions to achieve this. 
+\begin{itemize}
+\item You should directly generate PDF files using \texttt{pdflatex}. 
+\item You can check which fonts a PDF files uses. In Acrobat Reader, select
+the menu Files$>$Document Properties$>$Fonts and select Show All
+Fonts. You can also use the program \texttt{pdffonts} which comes
+with \texttt{xpdf} and is available out-of-the-box on most Linux machines. 
+\item The IEEE has recommendations for generating PDF files whose fonts
+are also acceptable for NIPS. Please see \url{http://www.emfield.org/icuwb2010/downloads/IEEE-PDF-SpecV32.pdf}
+
+The \texttt{\textbackslash{}bbold} package almost always uses bitmap
+fonts. You should use the equivalent AMS Fonts: 
+
+\noindent \begin{verbatim}
+    \usepackage{amsfonts}
+
+\end{verbatim}
+
+\noindent followed by, e.g., \texttt{\textbackslash{}mathbb\{R\}},\texttt{
+\textbackslash{}mathbb\{N\}}, or \texttt{\textbackslash{}mathbb\{C\}}
+for $\mathbb{R}$, $\mathbb{N}$ or $\mathbb{C}$. You can also use
+the following workaround for reals, natural and complex: 
+
+\noindent \begin{verbatim}
+    \newcommand{\RR}{I\!\!R} %real numbers
+    \newcommand{\Nat}{I\!\!N} %natural numbers
+    \newcommand{\CC}{I\!\!\!\!C} %complex numbers
+
+\end{verbatim}
+
+\noindent Note that \texttt{amsfonts} is automatically loaded by the
+\texttt{amssymb} package.
+\end{itemize}
+If your file contains type 3 fonts or non embedded TrueType fonts,
+we will ask you to fix it.
+
+\subsection{Margins in \protect\LaTeX{}}
+
+Most of the margin problems come from figures positioned by hand using
+\texttt{special} or other commands. We suggest using the command \texttt{includegraphics}
+from the \texttt{graphicx} package. Always specify the figure width
+as a multiple of the line width as in the example below: 
+
+\noindent \begin{verbatim}
+
+   \usepackage[pdftex]{graphicx} ...
+   \includegraphics[width=0.8\linewidth]{myfile.pdf}
+
+\end{verbatim}
+
+\noindent See Section 4.4 in the graphics bundle documentation (\url{http://mirrors.ctan.org/macros/latex/required/graphics/grfguide.pdf})
+
+A number of width problems arise when \LaTeX{} cannot properly hyphenate
+a line. Please give LaTeX hyphenation hints using the \texttt{\textbackslash{}-}
+command when necessary.
+
+\subsubsection*{Acknowledgments}
+
+Use unnumbered third level headings for the acknowledgments. All acknowledgments
+go at the end of the paper. Do not include acknowledgments in the
+anonymized submission, only in the final paper.
+
+\section*{References}
+
+References follow the acknowledgments. Use unnumbered first-level
+heading for the references. Any choice of citation style is acceptable
+as long as you are consistent. It is permissible to reduce the font
+size to \texttt{small} (9 point) when listing the references. \textbf{Remember
+that you can use a ninth page as long as it contains }\textbf{\emph{only}}\textbf{
+cited references.} \medskip{}
+
+{\small{}{[}1{]} Alexander, J.A.\ \& Mozer, M.C.\ (1995) Template-based
+algorithms for connectionist rule extraction. In G.\ Tesauro, D.S.\ Touretzky
+and T.K.\ Leen (eds.), }\textit{\small{}Advances in Neural Information
+Processing Systems 7}{\small{}, pp.\ 609\textendash 616. Cambridge,
+MA: MIT Press.}{\small \par}
+
+{\small{}{[}2{]} Bower, J.M.\ \& Beeman, D.\ (1995) }\textit{\small{}The
+Book of GENESIS: Exploring Realistic Neural Models with the GEneral
+NEural SImulation System.}{\small{} New York: TELOS/Springer\textendash Verlag.}{\small \par}
+
+{\small{}{[}3{]} Hasselmo, M.E., Schnell, E.\ \& Barkai, E.\ (1995)
+Dynamics of learning and recall at excitatory recurrent synapses and
+cholinergic modulation in rat hippocampal region CA3. }\textit{\small{}Journal
+of Neuroscience}{\small{} }\textbf{\small{}15}{\small{}(7):5249-5262.}{\small \par}
+\end{document}

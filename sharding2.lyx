@@ -69,6 +69,8 @@
 \shortcut idx
 \color #008000
 \end_index
+\leftmargin 2cm
+\rightmargin 2cm
 \secnumdepth 3
 \tocdepth 3
 \paragraph_separation indent
@@ -158,7 +160,7 @@ Introduction
 \end_layout
 
 \begin_layout Section
-Motivation and Outline
+Motivation and Outline - Core Sharding
 \end_layout
 
 \begin_layout Standard
@@ -226,41 +228,7 @@ Validators then vote on the availability of blocks to the network, and are
  
 \end_layout
 
-\begin_layout Section
-Inspiration and Original Contributions
-\end_layout
-
-\begin_layout Standard
-We would like to thank: Ethereum and Dfinity for the idea of separating
- state execution from data availability checking; Ethereum for the idea
- of using Erasure Coding to prove availability; Zilliqa and Dfinity for
- the idea of forming committees using random sampling to vote on blocks.
- Our original contributions are: 
-\end_layout
-
-\begin_layout Itemize
-Formalising a concrete mechanism for multi-dimensional self-authenticating
- erasure codes, without checking more than O(1) Merkle roots.
- Previous solutions have relied on further data availability proofs or an
- increased burden on verifiers.
- 
-\end_layout
-
-\begin_layout Itemize
-We are the first to apply erasure codes to prove that a program's intermediate
- state execution has been committed to the network, which enables the generation
- of succinct fraud proofs that execution is incorrect.
- Previous solutions to off-loading state execution, like Trubit, relied
- on rounds of interactivity to generate proofs of incorrectness.
-\end_layout
-
-\begin_layout Itemize
-We also developed variants of a cross shard locking system which were eventually
- adapted by Ethereum to a cross-shard yanking system, which we have also
- adopted.
-\end_layout
-
-\begin_layout Section
+\begin_layout Subsection
 Protocol Structure 
 \end_layout
 
@@ -271,38 +239,30 @@ t components, which can be subdivided into three themes: voting schemes;
 \end_layout
 
 \begin_layout Enumerate
-Consensus Schemes:
+
+\series bold
+Motivation and Outline - Sharding
+\series default
+ 
 \end_layout
 
 \begin_deeper
 \begin_layout Enumerate
-Voting Schemes - Forkful vs Fork-free
-\end_layout
-
-\begin_layout Enumerate
-Validator Sampling and Shuffling
-\end_layout
-
-\begin_layout Enumerate
-Marginal Voting Incentives 
+Protocol Structure
 \end_layout
 
 \end_deeper
 \begin_layout Enumerate
-Data Creation 
+Consensus:
 \end_layout
 
 \begin_deeper
 \begin_layout Enumerate
-Block Creation 
+Voting Scheme
 \end_layout
 
 \begin_layout Enumerate
-Data Availability Checking Through Erasure Codes
-\end_layout
-
-\begin_layout Enumerate
-Fraud Proofs
+Validator registration and Shuffling
 \end_layout
 
 \end_deeper
@@ -320,156 +280,158 @@ Stateless Clients
 \end_layout
 
 \end_deeper
-\begin_layout Part
-Consensus Schemes
+\begin_layout Enumerate
+Minimal Sharding - No Smart Contracts
 \end_layout
 
-\begin_layout Section
-Voting Schemes - Forkful vs Fork-free
+\begin_deeper
+\begin_layout Enumerate
+Summary - a simple protocol to transfer currency.
 \end_layout
 
-\begin_layout Standard
-We adopt a fork free voting scheme with 
-\end_layout
+\end_deeper
+\begin_layout Enumerate
 
-\begin_layout Standard
-Broadly speaking, there are two kinds of block-chain protocols: those that
- admit forks and those that don't.
- 
-\end_layout
-
-\begin_layout Standard
-One of the chief benefit of forking consensus protocols like Bitcoin, is
- that they allow the network to recover from majority attacks.
- Even if a 
-\begin_inset Quotes eld
-\end_inset
-
-dishonest
-\begin_inset Quotes erd
-\end_inset
-
- majority creates an invalid chain, so long as the network recovers its
- honest majority, the invalid chain may be overtaken by a valid one.
- we may summarise this by saying: In Bitcoin, votes are continuously validate
- prior blocks and so no block is truly finalised.
- It may at any point be reverted.
- Conversely, in fork-free protocols, such as PBFT, once a vote validating
- a block occurs it is final.
- 
-\end_layout
-
-\begin_layout Standard
-However, in the context of a sharded block-chain forking consensus protocols
- need a great deal of extra apparatus due to inter-shard dependencies.
- If a fork on the block-chain occurs on shard A, and shard B has blocks
- that depend on the state in shard A, then a reversion of blocks on shard
- A will need to effect a reversions of blocks on shard B.
- Tracking all the state dependencies and ensuring that reversions do not
- revert too much of the global state is still an unsolved problem in the
- block-chain space.
- This problem is compounded by the fragmentation of state that comes with
- sharding.
- If state is distributed across many shards, then a large proportion of
- transactions on the block-chain reference state between shards, meaning
- a large number of dependencies, and reversions on one shard causing reversions
- on many others .
- Bearing these thoughts in mind, a sharded block-chain must either: 
+\series bold
+Motivation and Outline - Advanced Sharding 
 \end_layout
 
 \begin_layout Enumerate
-Track inter-shard dependencies created by transactions, and determine an
- efficient way of reverting those changes, thereby maintaining the resilience
- of the block-chain to majority attacks.
+Separating Validity Checking from Availability Checking
+\end_layout
+
+\begin_deeper
+\begin_layout Enumerate
+Erasure Coding
 \end_layout
 
 \begin_layout Enumerate
-Adopt a consensus protocol that admits no forks at the application layer,
- thereby losing the flexibility of a block-chain to withstand short-lived
- 50% attacks on the network.
+Fraud Proofs
 \end_layout
 
-\begin_layout Standard
-In Maxima, we adopt the second approach but with the following fail-safe:
- In the event of a large-scale attack, whether clients would chose the dishonest
- chain or chose to revert those changes would be determined largely by social
- consensus: a proof that an attack had been performed by a dishonest majority
- with encouragement from the Maxima organisation about which block to revert
- to.
- 
+\begin_layout Enumerate
+Summary
 \end_layout
 
-\begin_layout Standard
-Having made the case for forking chains, it should be noted that in the
- entire history of Bitcoin only once was a block-chain reverted by more
- than its finalisation threshold of 6 blocks.
- This incident occurred due to a mining consortium not checking block validity
- when mining.
- However, a social layer of consensus has been used at least twice to change
- the protocol.
- This means that using social consensus to resolve short-term attacks does
- not come with much overhead, if historical precedent is to be assumed.
+\end_deeper
+\begin_layout Enumerate
+Virtual Machine 
 \end_layout
 
-\begin_layout Standard
-More concretely, our voting scheme: 
+\begin_deeper
+\begin_layout Enumerate
+EWASM VM
 \end_layout
 
-\begin_layout Standard
-\begin_inset Note Note
-status collapsed
-
-\begin_layout Plain Layout
-Having said that, Maxima's approach would be to prevent any form of attack,
- and to provide stronger safety guarantees than Bitcoin- for instance by
- adopting proof of stake which reduces miner centralisation
-\begin_inset Foot
-status collapsed
-
-\begin_layout Plain Layout
-There are significant economies of scale that come with proof of work mining:
- a huge amount of R&D funding is put into developing custom hardware for
- mining; low cost energy in certain parts of the world make mining pools
- far more attractive in parts of China than elsewhere.
- Such economies of scale are not present in proof of stake systems, which
- reduces miner centralisation.
+\begin_layout Enumerate
+Transpilers and the future of block-chain
 \end_layout
 
-\end_inset
-
-.
- Furthermore, a number of popular block-chain protocols are also fork-free
- and so far fault tolerant, they include: NEO, Zilliqa,EOS.
- We aim for our system to be as resilient as these, but with much greater
- scalability due to sharding.
- In the long term, we will also explore methods for forkful sharding that
- resolves the problem of tracking inter-shard dependencies and reverting
- on block-chain forks, although that is not the present plan.
- 
+\end_deeper
+\begin_layout Enumerate
+Solving the State Problem 
 \end_layout
 
-\end_inset
+\begin_deeper
+\begin_layout Enumerate
 
-
+\series bold
+Introducing rental fees to the block-chain 
 \end_layout
 
+\begin_layout Enumerate
+
+\series bold
+Building on top of IPFS
+\end_layout
+
+\end_deeper
 \begin_layout Section
 Achieving Fork-Free Consensus
+\end_layout
+
+\begin_layout Subsection
+Consensus Scheme - Modified Dfinity
+\end_layout
+
+\begin_layout Standard
+One critique of proof of stake are that the economies of scale eventually
+ lead to a few centralised stakers.
+ This led to the adoption of delegated proof of stake.
+ But with centralisation there is a good chance an actor can be bribed.
+ More recently, consensus models have emerged that randomly sample participants
+ from a global pool.
+ Both Dfinity and Zilliqa have byzantine fault tolerant like algorithms
+ that have O(n) communication complexity, enabling the scaling of ths algorithm
+ to the order of 400 nodes.
+\end_layout
+
+\begin_layout Standard
+
+\series bold
+Weighing up the benefits and disadvantages of our approach
+\end_layout
+
+\begin_layout Standard
+There may be criticisms in that marginal incentives are not properly aligned
+ in these schemes, compared with slashing proof of stake schemes like casper.
+ However, as both rely on an honest majority assumption we deem them both
+ as safe as each other.
+ Slashing may also be introduced probabilistically to the Dfinity scheme
+ as we will later show.
+ Though we could also adopt the Zilliqa consensus algorithm, we adopt the
+ Dfinity model for the simplicity of its algorithm which we outline here.
+ 
+\end_layout
+
+\begin_layout Standard
+
+\series bold
+Algorithm in depth
+\end_layout
+
+\begin_layout Standard
+In Dfinity, the network is grouped into threshold relay groups.
+ These groups are created through random sampling and have a size of about
+ 400.
+ A random number is generated which selects the first relay group.
+ These relay groups then sign on the random number to produce another random
+ number and select the next relay group.
+ The random number also selects a number of block proposers, and the blocks
+ if valid may be signed by the current threshold relay group.
+ This algorithm (with block proposers) and notaries who sign on blocks have
+ similarities with PBFT schemes.
+ Whereas PBFT commits only one block and forges consensus after a round
+ fo prepare and commits, the Dfinity scheme may commit more than one block.
+ Dfinity achieves its high speed and short block times exactly because notarizat
+ion is not full consensus.
+ However, notarization can be seen as optimistic consensus because it will
+ frequently be the case that only one block gets notarized.
+ Hence, whenever the broadcast network functions normally a transaction
+ is final in the Dfinity consensus after two notarized confirmations plus
+ a network traversal time.
+ The notarization step makes it impossible for the adversary to build and
+ sustain a chain of linked, notarized blocks in secret.
+ For this reason, Dfinity does not suffer from the selfish mining attack
+ [4] or the nothing-at-stake problem.
+\end_layout
+
+\begin_layout Standard
+
+\series bold
+Advantages
 \end_layout
 
 \begin_layout Standard
 Fork-free protocols typically use BFT style algorithms.
  These are systems where a vote for a block consists of a prepare followed
  by a commit.
- They have been modified in recent times to create significant improvements.
- 
+ They are fork-free, which is essential for cross-shard communication.
+ Traditionally, PBFT couldn't scale to the size of a network.
+ So instead, we: 
 \end_layout
 
-\begin_layout Enumerate
-The PBFT modification - have a leader who aggregates votes to improve efficiency
-\end_layout
-
-\begin_layout Enumerate
+\begin_layout Standard
 Subsample from the entire population so many validators are voting but not
  all (in Zilliqa, they use X).
  If say 400 participants are voting and we assume that f<25% are byzantine.
@@ -478,17 +440,1245 @@ Subsample from the entire population so many validators are voting but not
  
 \end_layout
 
-\begin_layout Enumerate
-Ensure the right kind of marginal incentive structures exist.
- One can dot his by using a system similar to Caspar slashing conditions.
- Not only does this act as a deterrent, but will also be a key sign of bribary
- that could lead up to a social consensus step.
+\begin_layout Standard
+
+\series bold
+What are nodes voting on?
+\end_layout
+
+\begin_layout Standard
+However, a key question here is: what precisely are the nodes voting on?
+ A simple scheme would be for nodes to run the transactions in a block and
+ verify that they are valid.
+ If more than half the nodes agree that a block is valid it is finalised
+ during notarisation.
+ However, this presents problems in the context of sharding: the validators
+ do not have the storage capacity or bandwidth to maintain the state of
+ all shards, and yet they must be shuffled quickly between shards.
+ One solution to this problem is to store the witness data with the transaction
+ in a block, entailing that a block is 
+\begin_inset Quotes eld
+\end_inset
+
+self-authenticating
+\begin_inset Quotes erd
+\end_inset
+
+, and the witness data need not be downloaded.
  
 \end_layout
 
-\begin_layout Enumerate
-Selecting the participants randomly and quickly, using DFinity stuyle consensus.
+\begin_layout Standard
+Another solution is for validators to just check that data is available,
+ rather than the correctness of a block.
+ If a block is unavailable some honest actor in the network may respond
+ with a fraud proof and take the faulty block creator's deposit.
+ Ultimately, we offload the actual checking of whether a block is correct
+ or not to the network.
+ Just checking data availability has a second advantage: the committee can
+ share the workload of the task.
+ Below we give an outline of how this may be made possible:
+\end_layout
+
+\begin_layout Standard
+Blocks are expanded with an erasure code to a size of 400, say.
+ The erasure code is a redundant encoding scheme which ensures that if 1/6
+ of the code is available, the original block can be reconstructed by honest
+ nodes within the network.
+ Then each of the 400 committee members checks for 3 or 4 pieces of data.
+ By the probabilistic sampling, we can ensure that 2/3 of the committee
+ is honest.
+ We also require a threshold signature of 1/2 for a block to be notarised
+ for its validitiy.
  
+\end_layout
+
+\begin_layout Standard
+If a block is available, then 2/3 of the committee will vote and so we have
+ no issues.
+ 
+\end_layout
+
+\begin_layout Standard
+If a block is unavailable, then fewer than 1/6 of honest members can have
+ pieces of data.
+ And so even with these votes, and 1/3 of the dishonest majority, they cannot
+ reach the 50% threshold required.
+ We devote a further section to data availability proofs.
+ 
+\end_layout
+
+\begin_layout Standard
+
+\series bold
+Slashing Conditions
+\end_layout
+
+\begin_layout Standard
+For all those who voted that a block is available, we require a random section
+ of the group to reveal the data that they got from the network.
+ This will disincentivise some from creating a block.
+ Creating a slashing condition going the other way is more tricky, since
+ we don't know if a block is unavailable or a a validator is just witholding
+ data.
+ However, liveness is a less serious issue, since the beacon group can always
+ be changed.
+ 
+\end_layout
+
+\begin_layout Standard
+
+\series bold
+Fall-back Mechanism
+\end_layout
+
+\begin_layout Standard
+One pertinent question is what should happen if a Beacon group is corrupted?
+ We use fast shuffling of validators to ensure that this is near impossible.
+ 
+\end_layout
+
+\begin_layout Subsection
+Consensus Scheme - Validator Registration and Shuffling
+\end_layout
+
+\begin_layout Standard
+Here , we just say a little more about the actual mechanisms and concrete
+ data structures underpinning the validator sampling.
+ Validators have their own shard, which they register a deposit to.
+ This deposit is a non-trivial sum.
+ 
+\series bold
+TODO - copy from DFINITY
+\end_layout
+
+\begin_layout Standard
+\begin_inset Separator plain
+\end_inset
+
+
+\end_layout
+
+\begin_layout Section
+Cross Shard Communication Through Message Passing
+\end_layout
+
+\begin_layout Standard
+Message Passing is the facvoured approach for concurrency control in distributed
+ systems.
+ 
+\end_layout
+
+\begin_layout Standard
+We use a message passing model based on Erlang, which has a simple implementatio
+n of CSP (Communicating Sequential Processes) where soft-threads (threads)
+ have each a single mailbox that can receive messages.
+ The soft-thread can pop off and react to messages in its mailbox, also
+ supporting some form of pattern matching for prioritization.
+ 
+\end_layout
+
+\begin_layout Standard
+Contracts are like the threads of execution and we have a single mailbox
+ per contract.
+ Conceptually message passing is simple, it is no different from running
+ the transaction, but with updated data, but with a special message type
+ to distinguish it from ordinary data.
+ Howeever, the only difference will be in the accumulation of messages.
+ Validators bundle up the messages and feed them in as data to the contract,
+ which can then pop messages off and react to them.
+ Diagramatically, we could envidage something like this.
+ 
+\end_layout
+
+\begin_layout Standard
+This introduces few overheads to the protocol, since popping off is just
+ a data operation, which can be defined in the main-loop of any contract.
+\end_layout
+
+\begin_layout Standard
+\begin_inset VSpace defskip
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Tabular
+<lyxtabular version="3" rows="8" columns="4">
+<features tabularvalignment="middle">
+<column alignment="center" valignment="top">
+<column alignment="center" valignment="top">
+<column alignment="center" valignment="top">
+<column alignment="center" valignment="top">
+<row>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $S_{1}$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $S_{2}$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $S_{3}$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $t_{0}$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $M_{1}$
+\end_inset
+
+ to 
+\begin_inset Formula $C_{1}$
+\end_inset
+
+ on 
+\begin_inset Formula $S_{3}$
+\end_inset
+
+ on chain
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+ Sent to 
+\begin_inset Formula $S_{2}$
+\end_inset
+
+ by val
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $t_{2}$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $M_{2}$
+\end_inset
+
+ to 
+\begin_inset Formula $C_{1}$
+\end_inset
+
+ on 
+\begin_inset Formula $S_{3}$
+\end_inset
+
+ on chain
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Sent to 
+\begin_inset Formula $S_{2}$
+\end_inset
+
+ by val
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $t_{3}$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Actor bundles 
+\begin_inset Formula $M_{1}$
+\end_inset
+
+ and 
+\begin_inset Formula $M_{2}$
+\end_inset
+
+ 
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $t_{4}$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+\begin_inset Formula $[M_{2},M_{1}]$
+\end_inset
+
+ validated against Mroot
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+\begin_inset Formula $C_{1}$
+\end_inset
+
+ reads [
+\begin_inset Formula $M_{2},M_{1}$
+\end_inset
+
+]
+\end_layout
+
+\end_inset
+</cell>
+</row>
+</lyxtabular>
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset VSpace defskip
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+We now talk about guarantees in our message passing model: 
+\end_layout
+
+\begin_layout Standard
+
+\series bold
+Availability
+\series default
+: 
+\end_layout
+
+\begin_layout Standard
+A pertinent question arises: 
+\series bold
+what mechanism ensures that a messag
+\series default
+e on one shard makes its way over to a message on another shard? We charge
+ the validators on Shard1 and Shard2, with disseminating the information
+ to the third shard.
+ Since there are approximately 400 validators per shard, this large number
+ ensures that with very high likelihood 
+\begin_inset Formula $1-(\frac{1}{3})^{400}$
+\end_inset
+
+, that a message will get through.
+ Certainly a message will get through eventually, if we take it that shards
+ might be DOS'd.
+ The message is sent with a transaction fee, and the transaction fee is
+ split between block miners on both shards.
+ In fact shards will periodically relay the message until it is included
+ in a shard.
+ 
+\end_layout
+
+\begin_layout Standard
+
+\series bold
+At Once:
+\end_layout
+
+\begin_layout Standard
+Each message contains a signed nonce, which ensures that messages cannot
+ be replayed.
+ 
+\end_layout
+
+\begin_layout Standard
+
+\series bold
+Message Ordering: 
+\end_layout
+
+\begin_layout Standard
+Messages sent directly from one shard to another will not be received out-of-ord
+er.
+ 
+\end_layout
+
+\begin_layout Standard
+Shard S1 sends messages M1, M2, M3 to S2
+\end_layout
+
+\begin_layout Standard
+Actor S3 sends messages M4, M5, M6 to S2
+\end_layout
+
+\begin_layout Standard
+However, we do not provide guarantees about the ordering of messages between
+ shards.
+ 
+\end_layout
+
+\begin_layout Standard
+Furthermore, specific concurrency control mechanisms may be built ontop
+ of message passing systems.
+ For instance locking schemes and other such things.
+ 
+\end_layout
+
+\begin_layout Standard
+
+\series bold
+Other Concurrency Management
+\end_layout
+
+\begin_layout Standard
+A question that emerges is what if the transaction fees are too low and
+ it takes a long time for a message to be included on another shard? More
+ broadly, should we be providing guarantees on message passing? We have
+ provided a robust system, but we adopt the Erlang philosophy that we make
+ the fallibility of communication explicit through message passing, and
+ do not try to provide a leaky abstraction.
+ Instead users can write implementations that provide guarantees on message
+ delivery, and delegate these to higher level protocols.
+ 
+\begin_inset Note Note
+status collapsed
+
+\begin_layout Plain Layout
+This could also be done in our system.
+ The only meaningful way for a sender to know whether an interaction was
+ successful is by receiving a business-level acknowledgement message, which
+ is not something Akka could make up on its own (neither are we writing
+ a “do what I mean” framework nor would you want us to).
+\end_layout
+
+\end_inset
+
+ This is a model that has been used with great success in Erlang and requires
+ the users to design their applications around it.
+ You can read more about this approach in the 
+\series bold
+Erlang documentation (section 10.9 and 10.10)
+\series default
+ and Akka.
+ 
+\end_layout
+
+\begin_layout Standard
+Another angle on this issue is that by providing only basic guarantees those
+ use cases which do not need stronger reliability do not pay the cost of
+ their implementation; it is always possible to add stronger reliability
+ on top of basic ones
+\end_layout
+
+\begin_layout Standard
+On top of these other concurrency controls can be implemented in smart contracts
+, for instance various kinds of locking scheme.
+ 
+\end_layout
+
+\begin_layout Standard
+
+\series bold
+The specific case of sending money?
+\series default
+ 
+\end_layout
+
+\begin_layout Standard
+\begin_inset Tabular
+<lyxtabular version="3" rows="6" columns="4">
+<features tabularvalignment="middle">
+<column alignment="center" valignment="top">
+<column alignment="center" valignment="top">
+<column alignment="center" valignment="top">
+<column alignment="center" valignment="top">
+<row>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $S_{1}$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $S_{2}$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $S_{3}$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $t_{0}$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $M_{1}$
+\end_inset
+
+ to 
+\begin_inset Formula $C_{1}$
+\end_inset
+
+ on 
+\begin_inset Formula $S_{3}$
+\end_inset
+
+ on chain
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+ Sent to 
+\begin_inset Formula $S_{2}$
+\end_inset
+
+ by val; deduct
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $t_{3}$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Actor bundles 
+\begin_inset Formula $M_{1}$
+\end_inset
+
+ and 
+\begin_inset Formula $M_{2}$
+\end_inset
+
+ 
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $t_{4}$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+\begin_inset Formula $[M_{2},M_{1}]$
+\end_inset
+
+ validated against Mroot
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+\begin_inset Formula $C_{1}$
+\end_inset
+
+ reads [
+\begin_inset Formula $M_{2},M_{1}$
+\end_inset
+
+]
+\end_layout
+
+\end_inset
+</cell>
+</row>
+</lyxtabular>
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Section
+Minimal Sharding - No Smart Contracts
+\end_layout
+
+\begin_layout Standard
+For each shard, the threshold relay assigns a different committee group
+ to the shard.
+ Each committee votes of the current block,checking for the validitiy of
+ the transactions.
+ Initially, we will only support money being sent from one shard to another.
+ However, we will later add virtual machine functionality.
+ A question arises: what if a beacon group stalls because it is DOS'd.
+ After a few minutes, if no relay group has been selected, two relay groups
+ can vote to correct a shard.
+ 
+\end_layout
+
+\begin_layout Section
+Advanced Sharding - Motivation and Introduction
+\end_layout
+
+\begin_layout Standard
+We have outlined a simple protocol to achieve sharded message calls.
+ However, we want to position ourselves at the forefront of technology.
+ Key to this is understanding the direction 
+\end_layout
+
+\begin_layout Standard
+
+\series bold
+Virtual machines and Interoperability.
+\end_layout
+
+\begin_layout Standard
+A sharded chain allows one to run the consensus logic of many chains.
+ For instance you could imagine one chain running bitcoin transactionson
+ one chain and the transactions of another coin on another.
+ Key to this would be cross compilation.
+ So, if we had a WASM virtual machine for our transactions, all that would
+ be needed would be to find a way to transpile code from one virtual machine
+ to another.
+ Then one could have all the code written on EThereum .
+ Transpilation is a well studied topic, and has been used to convert C++
+ to Javascript etc.
+ 
+\end_layout
+
+\begin_layout Standard
+
+\series bold
+The language of the WEB
+\end_layout
+
+\begin_layout Standard
+Having a wasm virtual machine has another benefit in that it is becoming
+ the de facto standard for the web.
+ This means that any code that could be executed in the browser, something
+ that is key to hosting websites could be run on our block-chain.
+ This would need to be coupled with efficient storage mechanisms.
+ Currently on Ethereum the main cost, is in storing data.
+ This is because Ethereum is getting to be at capacity in terms of the blocks
+ that each node must sync on when toring data.
+ In sharding, this removes the storage problem by a huge constant factor.
+ 
+\end_layout
+
+\begin_layout Standard
+
+\series bold
+Efficient Storage
+\end_layout
+
+\begin_layout Standard
+Apart from sharding, one idea to improve storage is to move to a model where
+ there is an efficient market for storing data.
+ Nodes Store When you want to store data an auction is done.
+ 
+\end_layout
+
+\begin_layout Section
+Storage 
+\end_layout
+
+\begin_layout Standard
+Suppose that we use the state transition lingo, STF(S, B) -> S’, where S
+ and S’ are states, B is a block (or it could be a transaction T), and STF
+ is the state transition function.
+ Then, we can transform: S -> the state root of S (ie.
+ the 32 byte root hash of the Merkle Patricia tree containing S) B -> (B,
+ W), where W is a “witness” - a set of Merkle branches proving the values
+ of all data that the execution of B accesses STF -> STF’, which takes as
+ input a state root and a block-plus-witness, uses the witness as a “database”
+ any time the execution of the block needs to read any accounts, storage
+ keys or other state data [exiting with an error if the witness does not
+ contain some piece of data that is being asked for], and outputs the new
+ state root.
+ That is, full nodes would only store state roots, and it would be miners’
+ responsibility to package Merkle branches (“witnesses”) along with the
+ blocks, and full nodes would download and verify these expanded blocks.
+ It’s entirely possible for stateless full nodes and regular full nodes
+ to exist alongside each other in a network; you could have translator nodes
+ that take a block B, attach the required witness, and broadcast (B, W)
+ on a different network protocol that stateless nodes live on; if a miner
+ mines a block on this stateless network, then the witness can simply be
+ stripped off, and the block rebroadcasted on the regular network.
+\end_layout
+
+\begin_layout Standard
+The simplest way to conceive the witness in a real protocol is to view it
+ as an RLP-encoded list of objects, which could then be parsed by the client
+ into a {sha3(x): x} key-value map; this map can then simply be plugged
+ into an existing ethereum implementation as a “database”.
+\end_layout
+
+\begin_layout Standard
+One limitation of the above idea being applied to Ethereum as it exists
+ today is that it would still require miners to be state-storing full nodes.
+ To solve this, we put the witness outside the signed data in the transaction,
+ and allow the miner that includes the transaction to adjust the witness
+ as needed before including the transaction.
+ If miners maintain a policy of holding onto all new state tree nodes that
+ were created in, say, the last 24 hours, then they will necessarily have
+ all the needed info to update the Merkle branches for any transactions
+ published in the last 24 hours.
+\end_layout
+
+\begin_layout Standard
+Miners and full nodes in general no longer need to store any state.
+ This makes “fast syncing” much much faster (potentially a few seconds).
+ All of the thorny questions about state storage economics that lead to
+ the need for designs like rent (eg.
+ https://github.com/ethereum/EIPs/issues/35 18 http://github.com/ethereum/EIPs/iss
+ues/87 14 http://github.com/ethereum/EIPs/issues/88 11) and even the current
+ complex SSTORE cost/refund scheme disappear, and blockchain economics can
+ focus purely on pricing bandwidth and computation, a much simpler problem)
+ Even for state-storing clients, the account lists allow clients to pre-fetch
+ storage data from disk, possibly in parallel, greatly reducing their vulnerabil
+ity to DoS attacks.
+ In a sharded blockchain, security is increased by reshuffling clients between
+ shards frequently; the more quickly clients are reshuffled, the more adaptive
+ the adversaries that the scheme is secure against in a BFT model.
+ In a stateless client, this cost drops to zero, allowing clients to be
+ reshuffled between every single block that they create.
+ One problem that this introduces is: who does store state?
+\end_layout
+
+\begin_layout Standard
+Any new state trie object that gets created or touched gets by default stored
+ by all full nodes for 3 months.
+ This will likely be around 2.5 GB, and this is like “welfare storage” that
+ is provided by the network on a voluntary basis.
+ We know that this level of service definitely can be provided on a volunteer
+ basis, as the current light client infrastructure already depends on altruism.
+ After 3 months, clients can forget randomly, so that for example a state
+ trie object that was last touched 12 months ago would still be stored by
+ 25% of nodes, and an object last touched 60 months ago would still be stored
+ by 5% of nodes.
+ Clients can try to ask for these objects using the regular light client
+ protocol.
+ 
+\end_layout
+
+\begin_layout Standard
+Clients that wish to ensure availability of specific pieces of data much
+ longer can do so with payments in state channels, similar to file coing.
+ A client can set up channels with paid archival nodes, and make a conditional
+ payment in the channel of the form “I give up $0.0001, and by default this
+ payment is gone forever.
+ However, if you later provide an object with hash H, and I sign off on
+ it, then that $0.0001 instead goes to you”.
+ This would signal a credible commitment to being possibly willing to unlock
+ those funds for that object in the future, and archival nodes could enter
+ many millions of such arrangements and wait for data requests to appear
+ and become an income stream.
+ We expect dapp developers to get their users to randomly store some portion
+ of storage keys specifically related to their dapp in browser localstorage.
+ This could even deliberately be made easy to do in the web3 API.
+ In practice, we expect the number of “archival nodes” that simply store
+ everything forever to continue to be high enough to serve the network until
+ the total state size exceeds ~1-10 terabytes after the introduction of
+ sharding, so the above may not even be needed.
+\end_layout
+
+\begin_layout Standard
+Links discussing related ideas:
+\end_layout
+
+\begin_layout Standard
+
+\series bold
+IPFS for storage/ Fiel coin
+\end_layout
+
+\begin_layout Standard
+
+\series bold
+Witnesses
+\series default
+: Key Question onf 
 \end_layout
 
 \begin_layout Section
@@ -643,10 +1833,6 @@ Again using sampling techniques, we can assign validators to each transaction.
 \end_layout
 
 \begin_layout Section*
-Randomness:
-\end_layout
-
-\begin_layout Section*
 Self-Authenticating Erasure Codes 
 \end_layout
 
@@ -721,6 +1907,16 @@ Collectively N verifiers want to check a block of size M is available.
 
 \begin_layout Section
 Construction
+\end_layout
+
+\begin_layout Standard
+The below is inefficient.
+ If we have a row of root(m) values , we can recompute the entire row from
+ that.
+ To do a fraud proof, we still need to authenticate the column.
+ What if we don't have a column value? So this still requires availability
+ of some values to prove consistency, but we may not have those values.
+ 
 \end_layout
 
 \begin_layout Subsection
@@ -2686,7 +3882,10 @@ Attacks against Dfinity
 
 \begin_layout Standard
 DKG for threshold groups registered on main chain.
-  New threshold group is selected every round using the randomness produced.
+\end_layout
+
+\begin_layout Standard
+New threshold group is selected every round using the randomness produced.
  
 \end_layout
 
@@ -2747,6 +3946,18 @@ The whole point of an erasure code is that:
 
 \begin_layout Section*
 Data Availability, State Execution and fast shuffling
+\end_layout
+
+\begin_layout Section*
+Randomness:
+\end_layout
+
+\begin_layout Section*
+Virtual Machine - Web Assembly? 
+\end_layout
+
+\begin_layout Standard
+(1) Transpilers ; (2) 
 \end_layout
 
 \begin_layout Standard
@@ -3292,6 +4503,244 @@ reference "others"
 
 \begin_layout Section
 Headings: first level
+\end_layout
+
+\begin_layout Standard
+\begin_inset Note Note
+status collapsed
+
+\begin_layout Plain Layout
+What if an unavailable block gets notarised.
+ 
+\end_layout
+
+\begin_layout Plain Layout
+
+\series bold
+A further condition: Rewarding: All validators who vote automatically lose
+ £50.
+ They are rewarded when they have voted on a commit that is finalised,
+\series default
+ but the slashing condition is far greater than...
+ Slashing condition is 1/6 for failures because can't guarantee who dunn
+ it.
+ However, unlikely a group is censored.
+ 
+\end_layout
+
+\begin_layout Plain Layout
+Use a gossip protocol to cast messages.
+ 
+\end_layout
+
+\begin_layout Plain Layout
+
+\series bold
+We rotate the proposer every view.
+ The view is given globally, by the random beacon.
+ 
+\end_layout
+
+\begin_layout Plain Layout
+https://medium.com/@VitalikButerin/minimal-slashing-conditions-20f0b500fc6c
+\end_layout
+
+\begin_layout Plain Layout
+https://github.com/ethereum/wiki/wiki/Proof-of-Stake-FAQ
+\end_layout
+
+\begin_layout Plain Layout
+https://yoichihirai.com/minimal.pdf
+\end_layout
+
+\begin_layout Plain Layout
+We shuffle validators using 
+\end_layout
+
+\begin_layout Plain Layout
+
+\series bold
+Have several hubs where the validators moneys are locked up.
+ Post a slashing rule to those hubs to slash a validator, via a cross-chain
+ transaction.
+ Offline validators: validators are decommissioned after a set number of
+ rounds.
+ 
+\end_layout
+
+\begin_layout Plain Layout
+Honest nodes only vote for one => can wait for a 2/3 
+\end_layout
+
+\begin_layout Plain Layout
+We use multi-cast messages/ Gossip to relay all the votes.
+ 
+\end_layout
+
+\begin_layout Plain Layout
+
+\series bold
+https://cseweb.ucsd.edu/~mihir/papers/multisignatures-ccs.pdf
+\end_layout
+
+\begin_layout Plain Layout
+
+\series bold
+threshold signatures
+\series default
+ are not necessary ....
+ individually accountable.
+ Just assume there is some honest node checking it.
+ If it's false a fraud proof may be given.
+ could even require a group signature of the individual sig.
+ 
+\end_layout
+
+\begin_layout Plain Layout
+
+\series bold
+Slashing condition should be based on there being a valid proof of availability,
+ consensus not necessary.
+ 
+\end_layout
+
+\begin_layout Plain Layout
+—————>
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Note Note
+status collapsed
+
+\begin_layout Plain Layout
+Broadly speaking, there are two kinds of block-chain protocols: those that
+ admit forks and those that don't.
+ 
+\end_layout
+
+\begin_layout Plain Layout
+One of the chief benefit of forking consensus protocols like Bitcoin, is
+ that they allow the network to recover from majority attacks.
+ Even if a 
+\begin_inset Quotes eld
+\end_inset
+
+dishonest
+\begin_inset Quotes erd
+\end_inset
+
+ majority creates an invalid chain, so long as the network recovers its
+ honest majority, the invalid chain may be overtaken by a valid one.
+ we may summarise this by saying: In Bitcoin, votes are continuously validate
+ prior blocks and so no block is truly finalised.
+ It may at any point be reverted.
+ Conversely, in fork-free protocols, such as PBFT, once a vote validating
+ a block occurs it is final.
+ 
+\end_layout
+
+\begin_layout Plain Layout
+However, in the context of a sharded block-chain forking consensus protocols
+ need a great deal of extra apparatus due to inter-shard dependencies.
+ If a fork on the block-chain occurs on shard A, and shard B has blocks
+ that depend on the state in shard A, then a reversion of blocks on shard
+ A will need to effect a reversions of blocks on shard B.
+ Tracking all the state dependencies and ensuring that reversions do not
+ revert too much of the global state is still an unsolved problem in the
+ block-chain space.
+ This problem is compounded by the fragmentation of state that comes with
+ sharding.
+ If state is distributed across many shards, then a large proportion of
+ transactions on the block-chain reference state between shards, meaning
+ a large number of dependencies, and reversions on one shard causing reversions
+ on many others .
+ Bearing these thoughts in mind, a sharded block-chain must either: 
+\end_layout
+
+\begin_layout Enumerate
+Track inter-shard dependencies created by transactions, and determine an
+ efficient way of reverting those changes, thereby maintaining the resilience
+ of the block-chain to majority attacks.
+\end_layout
+
+\begin_layout Enumerate
+Adopt a consensus protocol that admits no forks at the application layer,
+ thereby losing the flexibility of a block-chain to withstand short-lived
+ 50% attacks on the network.
+\end_layout
+
+\begin_layout Plain Layout
+In Maxima, we adopt the second approach but with the following fail-safe:
+ In the event of a large-scale attack, whether clients would chose the dishonest
+ chain or chose to revert those changes would be determined largely by social
+ consensus: a proof that an attack had been performed by a dishonest majority
+ with encouragement from the Maxima organisation about which block to revert
+ to.
+ 
+\end_layout
+
+\begin_layout Plain Layout
+Having made the case for forking chains, it should be noted that in the
+ entire history of Bitcoin only once was a block-chain reverted by more
+ than its finalisation threshold of 6 blocks.
+ This incident occurred due to a mining consortium not checking block validity
+ when mining.
+ However, a social layer of consensus has been used at least twice to change
+ the protocol.
+ This means that using social consensus to resolve short-term attacks does
+ not come with much overhead, if historical precedent is to be assumed.
+\end_layout
+
+\begin_layout Plain Layout
+More concretely, our voting scheme: 
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Note Note
+status collapsed
+
+\begin_layout Plain Layout
+Having said that, Maxima's approach would be to prevent any form of attack,
+ and to provide stronger safety guarantees than Bitcoin- for instance by
+ adopting proof of stake which reduces miner centralisation
+\begin_inset Foot
+status collapsed
+
+\begin_layout Plain Layout
+There are significant economies of scale that come with proof of work mining:
+ a huge amount of R&D funding is put into developing custom hardware for
+ mining; low cost energy in certain parts of the world make mining pools
+ far more attractive in parts of China than elsewhere.
+ Such economies of scale are not present in proof of stake systems, which
+ reduces miner centralisation.
+\end_layout
+
+\end_inset
+
+.
+ Furthermore, a number of popular block-chain protocols are also fork-free
+ and so far fault tolerant, they include: NEO, Zilliqa,EOS.
+ We aim for our system to be as resilient as these, but with much greater
+ scalability due to sharding.
+ In the long term, we will also explore methods for forkful sharding that
+ resolves the problem of tracking inter-shard dependencies and reverting
+ on block-chain forks, although that is not the present plan.
+ 
+\end_layout
+
+\end_inset
+
+
 \end_layout
 
 \begin_layout Standard

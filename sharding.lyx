@@ -329,12 +329,42 @@ Voting Schemes - Forkful vs Fork-free
 \end_layout
 
 \begin_layout Standard
+We adopt a fork free voting scheme with stateless clients.
+ 
+\end_layout
+
+\begin_layout Standard
+(1) vote per shard, economically enforceable -> voting could occur much
+ more quickly than block creation.
+\end_layout
+
+\begin_layout Standard
+(2) require a significant number of votes
+\end_layout
+
+\begin_layout Standard
+(2) 
+\end_layout
+
+\begin_layout Standard
+(b)So just copy paste caspar/ zilliqa 
+\end_layout
+
+\begin_layout Standard
+(c)
+\end_layout
+
+\begin_layout Standard
+\begin_inset Note Note
+status open
+
+\begin_layout Plain Layout
 Broadly speaking, there are two kinds of block-chain protocols: those that
  admit forks and those that don't.
  
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 One of the chief benefit of forking consensus protocols like Bitcoin, is
  that they allow the network to recover from majority attacks.
  Even if a 
@@ -355,7 +385,7 @@ dishonest
  
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 However, in the context of a sharded block-chain forking consensus protocols
  need a great deal of extra apparatus due to inter-shard dependencies.
  If a fork on the block-chain occurs on shard A, and shard B has blocks
@@ -385,7 +415,7 @@ Adopt a consensus protocol that admits no forks at the application layer,
  50% attacks on the network.
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 In Maxima, we adopt the second approach but with the following fail-safe:
  In the event of a large-scale attack, whether clients would chose the dishonest
  chain or chose to revert those changes would be determined largely by social
@@ -395,7 +425,7 @@ In Maxima, we adopt the second approach but with the following fail-safe:
  
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 Having made the case for forking chains, it should be noted that in the
  entire history of Bitcoin only once was a block-chain reverted by more
  than its finalisation threshold of 6 blocks.
@@ -407,8 +437,13 @@ Having made the case for forking chains, it should be noted that in the
  not come with much overhead, if historical precedent is to be assumed.
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 More concretely, our voting scheme: 
+\end_layout
+
+\end_inset
+
+
 \end_layout
 
 \begin_layout Standard
@@ -639,7 +674,7 @@ Again using sampling techniques, we can assign validators to each transaction.
 \end_layout
 
 \begin_layout Section*
-Stateless clients 
+Randomness:
 \end_layout
 
 \begin_layout Section*
@@ -719,11 +754,19 @@ Collectively N verifiers want to check a block of size M is available.
 Construction
 \end_layout
 
-\begin_layout Itemize
-K - The expansion factor of each read solomon code
+\begin_layout Subsection
+Glossary 
 \end_layout
 
-\begin_layout Itemize
+\begin_layout Standard
+
+\series bold
+K 
+\series default
+- The expansion factor of each read solomon code
+\end_layout
+
+\begin_layout Standard
 Let 
 \begin_inset Formula $D_{ij},F_{ij},G_{ij}$
 \end_inset
@@ -731,7 +774,7 @@ Let
  represent the data int he first, second and third squares respectively
 \end_layout
 
-\begin_layout Itemize
+\begin_layout Standard
 \begin_inset Formula $x$
 \end_inset
 
@@ -746,12 +789,13 @@ Let
  are respectively the bilinear accumulator constants for the committed values
 \end_layout
 
-\begin_layout Itemize
+\begin_layout Standard
+
+\series bold
 First Square:
 \end_layout
 
-\begin_deeper
-\begin_layout Itemize
+\begin_layout Standard
 Let 
 \begin_inset Formula $d_{ij}$
 \end_inset
@@ -789,12 +833,12 @@ Let
 
 \end_layout
 
-\end_deeper
-\begin_layout Itemize
+\begin_layout Standard
+
+\series bold
 Second Square:
 \end_layout
 
-\begin_deeper
 \begin_layout Itemize
 Let 
 \begin_inset Formula $f_{ij}$
@@ -861,12 +905,12 @@ Let
 
 \end_layout
 
-\end_deeper
-\begin_layout Itemize
+\begin_layout Standard
+
+\series bold
 Third Square:
 \end_layout
 
-\begin_deeper
 \begin_layout Itemize
 Let 
 \begin_inset Formula $g_{ij}$
@@ -909,9 +953,54 @@ Let
 
 \end_layout
 
-\end_deeper
-\begin_layout Itemize
+\begin_layout Standard
 An example is given below with K =2/3:
+\end_layout
+
+\begin_layout Standard
+
+\series bold
+Definition
+\series default
+: for an element 
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+
+\begin_inset Formula $G_{ij}=(g_{ij},i,j),z_{ij}$
+\end_inset
+
+
+\family default
+\series default
+\shape default
+\size default
+\emph default
+\bar default
+\strikeout default
+\uuline default
+\uwave default
+\noun default
+\color inherit
+ to be 
+\series bold
+available
+\series default
+, an honest participant of the network must have access to it and it must
+ be authenticated, so the following constraint holds: 
+\begin_inset Formula $e[(g_{ij},i,j),z_{ij}]=z$
+\end_inset
+
+.
+ 
 \end_layout
 
 \begin_layout Standard
@@ -1231,33 +1320,40 @@ An example is given below with K =2/3:
 \end_layout
 
 \begin_layout Subsection
-Enforcing Authentication 
+Authentication/Availability Transitivity 
 \end_layout
 
 \begin_layout Standard
-If an element in 
-\begin_inset Formula $D$
+If a set of values 
+\begin_inset Formula $X$
 \end_inset
 
- or 
-\begin_inset Formula $F$
+ in an erasure code are available, and can reproduce some data 
+\begin_inset Formula $Y$
 \end_inset
 
- does not satisfy it's authentication constraint, i.e 
-\begin_inset Formula $e[(f_{ij},i,j),y_{ij}]\neq y$
+, then if 
+\begin_inset Formula $y$
 \end_inset
 
- and element is available then this can be proved in 
+
+\begin_inset Formula $\in$
+\end_inset
+
+Y is not authenticated this can be proven in 
 \begin_inset Formula $O(\sqrt{m})$
 \end_inset
 
- .
- Say that an element in the second square does not satisfy its constraint,
- this can be proven from 
-\begin_inset Formula $\sqrt{(m)}$
+ steps.
+ The authentication transitivity assumption is this : unless an 
+\begin_inset Formula $O(\sqrt{(m)})$
 \end_inset
 
- elements in the corresponding column.
+ fraud proof is given by the network: then if 
+\begin_inset Formula $X$
+\end_inset
+
+ is available and produces Y, Y must be authenticated and thus available.
  
 \end_layout
 
@@ -1266,7 +1362,7 @@ Proof of Uniqueness
 \end_layout
 
 \begin_layout Standard
-Given all available elements are authenticated.
+Since all available elements are authenticated.
  If it is possible to construct more than one element in the 
 \begin_inset Formula $ijth$
 \end_inset
@@ -1302,7 +1398,8 @@ Given all available elements are authenticated.
 \end_layout
 
 \begin_layout Standard
-This means all values must be unique or a succinct fraud proof can be given.
+This means if two distinct items are unavailable a succinct fraud proof
+ can be given.
  
 \end_layout
 
@@ -1315,11 +1412,7 @@ Given points 8.1, we can prove liveness.
 \end_layout
 
 \begin_layout Standard
-Suppose all available elements of 
-\begin_inset Formula $D,F$
-\end_inset
-
- satisfy the authentication constraints then: 
+Suppose no authentication fraud proof is given by the network, then: 
 \end_layout
 
 \begin_layout Standard
@@ -1327,7 +1420,7 @@ If the data for a row
 \begin_inset Formula $D_{i*}$
 \end_inset
 
- is unavailable then:
+ is unavailable then: (by authentication transitivity)
 \end_layout
 
 \begin_layout Standard
@@ -1356,11 +1449,7 @@ If the data for a row
 \end_layout
 
 \begin_layout Standard
-#unavailable or 
-\series bold
-unauthenticated
-\series default
- elements in 
+#unavailable elements in 
 \begin_inset Formula $G$
 \end_inset
 
@@ -1368,15 +1457,11 @@ unauthenticated
 \begin_inset Formula $>(k-1)^{2}m$
 \end_inset
 
- or equivalently:
+ or equivalently: (by authentication transitivity)
 \end_layout
 
 \begin_layout Standard
-#available and 
-\series bold
-authenticated
-\series default
- elements in 
+#available elements in 
 \begin_inset Formula $G$
 \end_inset
 
@@ -1404,43 +1489,24 @@ Therefore a liveness check needs to ensure that more than
 \begin_inset Formula $(2k-1)m$
 \end_inset
 
- elements of G are available and 
-\family default
-\series bold
-\shape default
-\size default
-\emph default
-\bar default
-\strikeout default
-\uuline default
-\uwave default
-\noun default
-\color inherit
-authenticated
-\family roman
-\series medium
-\shape up
-\size normal
-\emph off
-\bar no
-\strikeout off
-\uuline off
-\uwave off
-\noun off
-\color none
- with a high likelihood.
+ elements of G are available with a high likelihood.
  If this be the case, we can reconstruct some dataset D.
  
 \end_layout
 
 \begin_layout Subsection*
-Collaborative Generation 
+Collaboratively Generated Erasure Codes
+\end_layout
+
+\begin_layout Standard
+Collaborative generation, check two merkle roots.
+ 
 \end_layout
 
 \begin_layout Standard
 \align center
 \begin_inset Tabular
-<lyxtabular version="3" rows="5" columns="6">
+<lyxtabular version="3" rows="10" columns="6">
 <features tabularvalignment="middle">
 <column alignment="center" valignment="top">
 <column alignment="center" valignment="top">
@@ -1455,7 +1521,7 @@ Collaborative Generation
 \begin_layout Plain Layout
 
 \series bold
-\begin_inset Formula $(d_{00},0,0),w_{00}),w_{w_{00}}$
+\begin_inset Formula $(d_{00},0,0),x_{00}$
 \end_inset
 
 
@@ -1477,11 +1543,780 @@ Collaborative Generation
 
 \end_inset
 </cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $(f_{00},0,0),y_{00}$
+\end_inset
+
+ 
+\end_layout
+
+\end_inset
+</cell>
 <cell alignment="center" valignment="top" topline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
-\begin_inset Formula $(d_{02},0,2),x_{02}$
+\begin_inset Formula $(f_{01},0,1),y_{01}$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $(f_{02},0,2),y_{02}$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $(d_{10},1,0),x_{10}$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $(d_{11},1,1),x_{11}$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $(f_{10},1,0),y_{10}$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $(f_{11},1,1),y_{11}$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $(f_{12},1,2),y_{12}$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $x_{0*,}\bar{x}_{0*}$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $x_{1*,}\bar{x}_{1*}$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+f
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+f
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+f
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $(g_{00},0,0),z_{00}$
+\end_inset
+
+ 
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $(g_{01},0,1),z_{01}$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $(g_{02},0,2),z_{02}$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $z_{0*},\bar{z_{0*}}$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $(g_{10},1,0),z_{10}$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $(g_{11},1,1),z_{11}$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $(g_{12},1,2),z_{12}$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $z_{*1},\bar{z_{*1}}$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $(g_{20},2,0),z_{20}$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" bottomline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $(g_{21},2,1),z_{21}$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" bottomline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $(g_{22},2,2),z_{22}$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" bottomline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+\begin_inset Formula $z_{*2},\bar{z_{*2}}$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+</row>
+</lyxtabular>
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+What are the implications to censoring of codes created by trust scores?
+ Competition amongst many sellers with high trust rating, think amazon.
+ So should not degenerate to a one proposer model.
+ Anyone can build up trust.
+
+\series bold
+ So then partly depends on fee, could also require to rotate proposers.
+ 
+\end_layout
+
+\begin_layout Standard
+\begin_inset Note Note
+status collapsed
+
+\begin_layout Plain Layout
+THis process means someone can alwasy check that something is correct before
+ creating more state, Hence we can pin down the fault on him.
+ 
+\end_layout
+
+\begin_layout Plain Layout
+Q1: how does one commit: easy, sign and broadcast to network
+\end_layout
+
+\begin_layout Plain Layout
+Q: how can one guarantee lots of other people are checking these guys? 
+\end_layout
+
+\begin_layout Plain Layout
+
+\series bold
+Alternative: failure points are verifiable, so a trust model can be built
+ up -> leads to centralisation, still be competition oligarchy...
+\end_layout
+
+\begin_layout Plain Layout
+
+\series bold
+A way to incentivise the light-client checking is perhaps through incentivising
+ routing requests?
+\end_layout
+
+\begin_layout Plain Layout
+In future use a zero knowledge proof your row was correct.
+ 
+\series bold
+Seems as though recursive snarks are not necessary.
+\end_layout
+
+\begin_layout Plain Layout
+
+\series bold
+People aren't going to do it if it costs to check! 
+\end_layout
+
+\begin_layout Section
+
+\series bold
+Can the availability checking be detected with statistical analysis, without
+ m*10 requests.
+\end_layout
+
+\begin_layout Plain Layout
+
+\series bold
+Request i from 100 actors, and see if it is returned.
+ Assume at most 90% may be accomplices...
+ 
+\end_layout
+
+\begin_layout Subsection
+Other 
+\end_layout
+
+\begin_layout Plain Layout
+A note - instead of bilinear accumulator, one can create certificates using
+ merkle branches, and this would be quantum resistant but decrease the concrete
+ efficiency.
+ The security assumption of this scheme relies on the discrete log Assumption.
+ 
+\end_layout
+
+\begin_layout Plain Layout
+In the end we can imagine eputation scores to be generated, what about transacti
+on fee to creator.
+ 
+\end_layout
+
+\begin_layout Plain Layout
+Needs to commit the accumulator values, a problem in the g1 g2 setting,
+ since a person can always grief by adding.
+ Take the x_00 to be merkle certificates.
+ 
+\series bold
+Could do it in a trusted way.
+ 
+\end_layout
+
+\begin_layout Plain Layout
+
+\series bold
+I create a row , so x and g can verify and create.
+ 
+\end_layout
+
+\begin_layout Plain Layout
+x creates a row, so g can verify
+\end_layout
+
+\begin_layout Plain Layout
+g creates a col, so n can verify and create a new table that is of size
+ root(m) which someone else can verify.
+ 
+\end_layout
+
+\begin_layout Plain Layout
+\align center
+\begin_inset Tabular
+<lyxtabular version="3" rows="7" columns="5">
+<features tabularvalignment="middle">
+<column alignment="center" valignment="top">
+<column alignment="center" valignment="top">
+<column alignment="center" valignment="top">
+<column alignment="center" valignment="top">
+<column alignment="center" valignment="top">
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\series bold
+\begin_inset Formula $(d_{00},0,0),x_{00}$
+\end_inset
+
+
+\series default
+ 
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $(d_{01},0,1),x_{01}$
 \end_inset
 
 
@@ -1551,18 +2386,6 @@ Collaborative Generation
 
 \end_inset
 </cell>
-<cell alignment="center" valignment="top" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-\begin_inset Formula $(d_{12},1,2),x_{12}$
-\end_inset
-
-
-\end_layout
-
-\end_inset
-</cell>
 <cell alignment="center" valignment="top" leftline="true" usebox="none">
 \begin_inset Text
 
@@ -1601,15 +2424,59 @@ Collaborative Generation
 </cell>
 </row>
 <row>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
+\begin_inset Formula $x_{0*,}\bar{x}_{0*}$
+\end_inset
+
 
 \end_layout
 
 \end_inset
 </cell>
+<cell alignment="center" valignment="top" topline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $x_{1*,}\bar{x}_{1*}$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+f
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+f
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+f
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
 <cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
 \begin_inset Text
 
@@ -1652,7 +2519,7 @@ Collaborative Generation
 
 \end_inset
 </cell>
-<cell alignment="center" valignment="top" topline="true" rightline="true" usebox="none">
+<cell alignment="center" valignment="top" topline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
@@ -1666,15 +2533,6 @@ Collaborative Generation
 </cell>
 </row>
 <row>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-
-\end_layout
-
-\end_inset
-</cell>
 <cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
 \begin_inset Text
 
@@ -1717,11 +2575,67 @@ Collaborative Generation
 
 \end_inset
 </cell>
-<cell alignment="center" valignment="top" rightline="true" usebox="none">
+<cell alignment="center" valignment="top" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
 \begin_inset Formula $(g_{12},1,2),y_{12}$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $(g_{20},2,0),y_{20}$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $(g_{21},2,1),y_{21}$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $(g_{22},2,2),y_{22}$
 \end_inset
 
 
@@ -1749,7 +2663,7 @@ Collaborative Generation
 
 \end_inset
 </cell>
-<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+<cell alignment="center" valignment="top" leftline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
@@ -1758,37 +2672,19 @@ Collaborative Generation
 
 \end_inset
 </cell>
-<cell alignment="center" valignment="top" bottomline="true" leftline="true" usebox="none">
+<cell alignment="center" valignment="top" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
-\begin_inset Formula $(g_{20},2,0),y_{20}$
-\end_inset
-
 
 \end_layout
 
 \end_inset
 </cell>
-<cell alignment="center" valignment="top" bottomline="true" usebox="none">
+<cell alignment="center" valignment="top" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
-\begin_inset Formula $(g_{21},2,1),y_{21}$
-\end_inset
-
-
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" bottomline="true" rightline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-\begin_inset Formula $(g_{22},2,2),y_{22}$
-\end_inset
-
 
 \end_layout
 
@@ -1802,27 +2698,47 @@ Collaborative Generation
 
 \end_layout
 
-\begin_layout Standard
-Doable each person computes row witnesses, 
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsection
+Another note, if the attackers bandwidth is absorbed he can't respond to
+ all the requests, so would need just more than the attackers bandwidth,
+ which will be much less than gigabytes..with gigabyte sized blocks...
+ still a bit rickety.
+ 
+\end_layout
+
+\begin_layout Subsection
+Attacks against Dfinity 
 \end_layout
 
 \begin_layout Standard
-Someone then computes a column witness, 
+DKG for threshold groups registered on main chain.
 \end_layout
 
 \begin_layout Standard
-Someone then computes the row witnesses.
+New threshold group is selected every round using the randomness produced.
  
 \end_layout
 
 \begin_layout Standard
-Fault attribution is easy.
+One idea would just be to select the next threshold group if after a period
+ of a few blocks, the threshold group has not responded.
  
 \end_layout
 
 \begin_layout Standard
-Slashing is fairly easy, just slash main guy unless he gives name of wrong
- doer.
+
+\series bold
+Practical
+\series default
+: Not possible for an attacker to catch up with threshold relay...
+ Therefore, can't get people in advance.
+ What if he stalls a relay.
+ Then we need a fall-back mechanism, then it's ok.
  
 \end_layout
 
@@ -1831,21 +2747,36 @@ Other
 \end_layout
 
 \begin_layout Standard
-A note - instead of bilinear accumulator, one can create certificates using
- merkle branches, and this would be quantum resistant but decrease the concrete
- efficiency.
- The security assumption of this scheme relies on the discrete log Assumption.
- 
-\end_layout
 
-\begin_layout Subsection
-Strategy
+\series bold
+The whole point of an erasure code is that:
 \end_layout
 
 \begin_layout Standard
-We now need only find an efficient strategy for proving that 90% of block
- data is available.
- 
+
+\series bold
+(1) I can check all blocks for myself as long as the light client assumption
+ holds
+\end_layout
+
+\begin_layout Standard
+
+\series bold
+(2) Reduces the amount of checking for everyone and utilises a fraud proof
+ mechanism
+\end_layout
+
+\begin_layout Standard
+
+\series bold
+(3) without erasure codes we must rely on just consensus, which may not
+ be enough for a sharded block-chain 
+\end_layout
+
+\begin_layout Standard
+
+\series bold
+(4)
 \end_layout
 
 \begin_layout Section*
