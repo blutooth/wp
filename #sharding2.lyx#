@@ -1575,10 +1575,10 @@ Suppose that we use the state transition lingo, STF(S, B) -> S’, where S
  any time the execution of the block needs to read any accounts, storage
  keys or other state data [exiting with an error if the witness does not
  contain some piece of data that is being asked for], and outputs the new
- state rootThat is, full nodes would only store state roots, and it would
- be miners’ responsibility to package Merkle branches (“witnesses”) along
- with the blocks, and full nodes would download and verify these expanded
- blocks.
+ state root.
+ That is, full nodes would only store state roots, and it would be miners’
+ responsibility to package Merkle branches (“witnesses”) along with the
+ blocks, and full nodes would download and verify these expanded blocks.
  It’s entirely possible for stateless full nodes and regular full nodes
  to exist alongside each other in a network; you could have translator nodes
  that take a block B, attach the required witness, and broadcast (B, W)
@@ -1597,28 +1597,6 @@ The simplest way to conceive the witness in a real protocol is to view it
 \begin_layout Standard
 One limitation of the above idea being applied to Ethereum as it exists
  today is that it would still require miners to be state-storing full nodes.
- One could imagine a system where transaction senders need to store the
- full state trie (and even then, only the portions relevant to them) and
- miners are also stateless, but the problem is that Ethereum state storage
- access is dynamic.
- For example, you could imagine a contract of the form getcodesize(sha3(sha3(...sha
-3(x)...)) % 2**160), with many thousands of sha3’s in the middle.
- This requires accessing the code of an account that cannot be known until
- millions of gas worth of computation have already been done.
- Hence, a transaction sender could create a transaction that contains a
- witness for a few accounts, performs a lot of computation, and then at
- the end attempts to access an account that it does not have a witness for.
- This is equivalent to the DAO soft fork vulnerability 37.
-\end_layout
-
-\begin_layout Standard
-A solution is to require a transaction to include a static list of the set
- of accounts that it can access; like EIP 648 24 but much stricter in that
- it requires a precise enumeration rather than a range.
- But then there is also another problem: by the time a transaction propagates
- through the network, the state of the accounts it accesses, and thus the
- correct Merkle branches to provide as a witness, may well be different
- from the correct data when the transaction was created.
  To solve this, we put the witness outside the signed data in the transaction,
  and allow the miner that includes the transaction to adjust the witness
  as needed before including the transaction.
@@ -1626,10 +1604,6 @@ A solution is to require a transaction to include a static list of the set
  were created in, say, the last 24 hours, then they will necessarily have
  all the needed info to update the Merkle branches for any transactions
  published in the last 24 hours.
-\end_layout
-
-\begin_layout Standard
-This design has the following advantages:
 \end_layout
 
 \begin_layout Standard
@@ -1641,28 +1615,15 @@ Miners and full nodes in general no longer need to store any state.
 ues/87 14 http://github.com/ethereum/EIPs/issues/88 11) and even the current
  complex SSTORE cost/refund scheme disappear, and blockchain economics can
  focus purely on pricing bandwidth and computation, a much simpler problem)
- Disk IO is no longer a problem for miners and full nodes.
- Disk IO has historically been the primary source of DoS vulnerabilities
- in Ethereum, and even today it’s likely the easiest availability DoS vector.
- The requirement for transactions to specify account lists incidentally
- adds a high degree of parallelizability; this is in many ways a supercharged
- version of EIP 648.
  Even for state-storing clients, the account lists allow clients to pre-fetch
  storage data from disk, possibly in parallel, greatly reducing their vulnerabil
 ity to DoS attacks.
  In a sharded blockchain, security is increased by reshuffling clients between
  shards frequently; the more quickly clients are reshuffled, the more adaptive
  the adversaries that the scheme is secure against in a BFT model.
- However, in a state-storing client model, reshuffling involved clients
- download the full state of the new shard they are being reshuffled to.
  In a stateless client, this cost drops to zero, allowing clients to be
  reshuffled between every single block that they create.
- One problem that this introduces is: who does store state? One of Ethereum’s
- key advantages is the platform’s ease of use, and the fact that users do
- not have to care about details like storing private state.
- Hence, for this kind of scheme to work well, we have to replicate a similar
- user experience.
- Here is a hybrid proposal for how this can be done:
+ One problem that this introduces is: who does store state?
 \end_layout
 
 \begin_layout Standard
@@ -1678,8 +1639,12 @@ Any new state trie object that gets created or touched gets by default stored
  by 5% of nodes.
  Clients can try to ask for these objects using the regular light client
  protocol.
- Clients that wish to ensure availability of specific pieces of data much
- longer can do so with payments in state channels.
+ 
+\end_layout
+
+\begin_layout Standard
+Clients that wish to ensure availability of specific pieces of data much
+ longer can do so with payments in state channels, similar to file coing.
  A client can set up channels with paid archival nodes, and make a conditional
  payment in the channel of the form “I give up $0.0001, and by default this
  payment is gone forever.
@@ -1700,6 +1665,19 @@ Any new state trie object that gets created or touched gets by default stored
 
 \begin_layout Standard
 Links discussing related ideas:
+\end_layout
+
+\begin_layout Standard
+Further data availability schemes may be found here...
+
+\series bold
+ IPFS for storage.
+ File coin.
+ They augment IPFS with a proof of storage over time.
+ However the key is do you also have th up to dat weitnesses, which is not
+ covered in their protocol.
+ Whenever witnesses come int hey update the state.
+ 
 \end_layout
 
 \begin_layout Section

@@ -315,20 +315,6 @@ Summary
 
 \end_deeper
 \begin_layout Enumerate
-Virtual Machine 
-\end_layout
-
-\begin_deeper
-\begin_layout Enumerate
-EWASM VM
-\end_layout
-
-\begin_layout Enumerate
-Transpilers and the future of block-chain
-\end_layout
-
-\end_deeper
-\begin_layout Enumerate
 Solving the State Problem 
 \end_layout
 
@@ -343,6 +329,20 @@ Introducing rental fees to the block-chain
 
 \series bold
 Building on top of IPFS
+\end_layout
+
+\end_deeper
+\begin_layout Enumerate
+Virtual Machine 
+\end_layout
+
+\begin_deeper
+\begin_layout Enumerate
+EWASM VM
+\end_layout
+
+\begin_layout Enumerate
+Transpilers and the future of block-chain
 \end_layout
 
 \end_deeper
@@ -1555,189 +1555,19 @@ Efficient Storage
 \begin_layout Standard
 Apart from sharding, one idea to improve storage is to move to a model where
  there is an efficient market for storing data.
- Nodes Store When you want to store data an auction is done.
+ This will be crucial, the greatest expense to ethereum is the cost of storage,
+ so the better we can bring this down the more competitive our sharding
+ solution will be.
  
-\end_layout
-
-\begin_layout Section
-Storage 
-\end_layout
-
-\begin_layout Standard
-Suppose that we use the state transition lingo, STF(S, B) -> S’, where S
- and S’ are states, B is a block (or it could be a transaction T), and STF
- is the state transition function.
- Then, we can transform: S -> the state root of S (ie.
- the 32 byte root hash of the Merkle Patricia tree containing S) B -> (B,
- W), where W is a “witness” - a set of Merkle branches proving the values
- of all data that the execution of B accesses STF -> STF’, which takes as
- input a state root and a block-plus-witness, uses the witness as a “database”
- any time the execution of the block needs to read any accounts, storage
- keys or other state data [exiting with an error if the witness does not
- contain some piece of data that is being asked for], and outputs the new
- state root.
- That is, full nodes would only store state roots, and it would be miners’
- responsibility to package Merkle branches (“witnesses”) along with the
- blocks, and full nodes would download and verify these expanded blocks.
- It’s entirely possible for stateless full nodes and regular full nodes
- to exist alongside each other in a network; you could have translator nodes
- that take a block B, attach the required witness, and broadcast (B, W)
- on a different network protocol that stateless nodes live on; if a miner
- mines a block on this stateless network, then the witness can simply be
- stripped off, and the block rebroadcasted on the regular network.
-\end_layout
-
-\begin_layout Standard
-The simplest way to conceive the witness in a real protocol is to view it
- as an RLP-encoded list of objects, which could then be parsed by the client
- into a {sha3(x): x} key-value map; this map can then simply be plugged
- into an existing ethereum implementation as a “database”.
-\end_layout
-
-\begin_layout Standard
-One limitation of the above idea being applied to Ethereum as it exists
- today is that it would still require miners to be state-storing full nodes.
- To solve this, we put the witness outside the signed data in the transaction,
- and allow the miner that includes the transaction to adjust the witness
- as needed before including the transaction.
- If miners maintain a policy of holding onto all new state tree nodes that
- were created in, say, the last 24 hours, then they will necessarily have
- all the needed info to update the Merkle branches for any transactions
- published in the last 24 hours.
-\end_layout
-
-\begin_layout Standard
-Miners and full nodes in general no longer need to store any state.
- This makes “fast syncing” much much faster (potentially a few seconds).
- All of the thorny questions about state storage economics that lead to
- the need for designs like rent (eg.
- https://github.com/ethereum/EIPs/issues/35 18 http://github.com/ethereum/EIPs/iss
-ues/87 14 http://github.com/ethereum/EIPs/issues/88 11) and even the current
- complex SSTORE cost/refund scheme disappear, and blockchain economics can
- focus purely on pricing bandwidth and computation, a much simpler problem)
- Even for state-storing clients, the account lists allow clients to pre-fetch
- storage data from disk, possibly in parallel, greatly reducing their vulnerabil
-ity to DoS attacks.
- In a sharded blockchain, security is increased by reshuffling clients between
- shards frequently; the more quickly clients are reshuffled, the more adaptive
- the adversaries that the scheme is secure against in a BFT model.
- In a stateless client, this cost drops to zero, allowing clients to be
- reshuffled between every single block that they create.
- One problem that this introduces is: who does store state?
-\end_layout
-
-\begin_layout Standard
-Any new state trie object that gets created or touched gets by default stored
- by all full nodes for 3 months.
- This will likely be around 2.5 GB, and this is like “welfare storage” that
- is provided by the network on a voluntary basis.
- We know that this level of service definitely can be provided on a volunteer
- basis, as the current light client infrastructure already depends on altruism.
- After 3 months, clients can forget randomly, so that for example a state
- trie object that was last touched 12 months ago would still be stored by
- 25% of nodes, and an object last touched 60 months ago would still be stored
- by 5% of nodes.
- Clients can try to ask for these objects using the regular light client
- protocol.
- 
-\end_layout
-
-\begin_layout Standard
-Clients that wish to ensure availability of specific pieces of data much
- longer can do so with payments in state channels, similar to file coing.
- A client can set up channels with paid archival nodes, and make a conditional
- payment in the channel of the form “I give up $0.0001, and by default this
- payment is gone forever.
- However, if you later provide an object with hash H, and I sign off on
- it, then that $0.0001 instead goes to you”.
- This would signal a credible commitment to being possibly willing to unlock
- those funds for that object in the future, and archival nodes could enter
- many millions of such arrangements and wait for data requests to appear
- and become an income stream.
- We expect dapp developers to get their users to randomly store some portion
- of storage keys specifically related to their dapp in browser localstorage.
- This could even deliberately be made easy to do in the web3 API.
- In practice, we expect the number of “archival nodes” that simply store
- everything forever to continue to be high enough to serve the network until
- the total state size exceeds ~1-10 terabytes after the introduction of
- sharding, so the above may not even be needed.
-\end_layout
-
-\begin_layout Standard
-Links discussing related ideas:
-\end_layout
-
-\begin_layout Standard
-
-\series bold
-Witnesses
-\series default
-: BLS accumulator =>
 \end_layout
 
 \begin_layout Section
 Separating Validity checking from State Execution
 \end_layout
 
-\begin_layout Itemize
-Key to security is fast shuffling.
- This means that the excutors can't do a lot.
- 
-\end_layout
-
-\begin_layout Itemize
-They attest to availability of blocks, fixed if others agree not so if others
- disagree.
- 
-\end_layout
-
-\begin_layout Section
-Execution disputes and Validity
-\end_layout
-
-\begin_layout Itemize
-Block creaters order and create transactions.
- The creators are sampled randomly from afixed set.
- 
-\end_layout
-
-\begin_layout Itemize
-They need a way of determining whether a transaction can pay them the gas
- to run the TX, and also if the ordering of transactions is correct.
- 
-\end_layout
-
-\begin_layout Itemize
-They need to do this without having access to all the state.
-\end_layout
-
-\begin_layout Itemize
-Light clients can store all this information, and transactions need to include
- access lists of data that they need.
- 
-\end_layout
-
-\begin_layout Itemize
-Zero knowledge proofs that I have the gas needed.
- 
-\end_layout
-
-\begin_layout Itemize
-Q: how can a transaction determine if two things are blocking.
- Just create a merkle tree that tracks these things.
- 
-\end_layout
-
-\begin_layout Itemize
-We can use a multi-dimensional eraure code to determine quickly if some
- data is available.
- 
-\end_layout
-
-\begin_layout Itemize
-Key to security is fast shuffling.
- This means that the excutors can't do a lot.
- They can't maintain state on each shard.
+\begin_layout Standard
+We can reduce the amount of checking that a validator does, which will enable
+ smart contracts to run very heavy processing algorithms.
  
 \end_layout
 
@@ -3339,615 +3169,134 @@ What are the implications to censoring of codes created by trust scores?
  
 \end_layout
 
+\begin_layout Section
+Solving The State Problem 
+\end_layout
+
 \begin_layout Standard
-\begin_inset Note Note
-status collapsed
+Suppose that we use the state transition lingo, STF(S, B) -> S’, where S
+ and S’ are states, B is a block (or it could be a transaction T), and STF
+ is the state transition function.
+ Then, we can transform: S -> the state root of S (ie.
+ the 32 byte root hash of the Merkle Patricia tree containing S) B -> (B,
+ W), where W is a “witness” - a set of Merkle branches proving the values
+ of all data that the execution of B accesses STF -> STF’, which takes as
+ input a state root and a block-plus-witness, uses the witness as a “database”
+ any time the execution of the block needs to read any accounts, storage
+ keys or other state data [exiting with an error if the witness does not
+ contain some piece of data that is being asked for], and outputs the new
+ state root.
+ That is, full nodes would only store state roots, and it would be miners’
+ responsibility to package Merkle branches (“witnesses”) along with the
+ blocks, and full nodes would download and verify these expanded blocks.
+ It’s entirely possible for stateless full nodes and regular full nodes
+ to exist alongside each other in a network; you could have translator nodes
+ that take a block B, attach the required witness, and broadcast (B, W)
+ on a different network protocol that stateless nodes live on; if a miner
+ mines a block on this stateless network, then the witness can simply be
+ stripped off, and the block rebroadcasted on the regular network.
+\end_layout
 
-\begin_layout Plain Layout
-THis process means someone can alwasy check that something is correct before
- creating more state, Hence we can pin down the fault on him.
+\begin_layout Standard
+The simplest way to conceive the witness in a real protocol is to view it
+ as an RLP-encoded list of objects, which could then be parsed by the client
+ into a {sha3(x): x} key-value map; this map can then simply be plugged
+ into an existing ethereum implementation as a “database”.
+\end_layout
+
+\begin_layout Standard
+One limitation of the above idea being applied to Ethereum as it exists
+ today is that it would still require miners to be state-storing full nodes.
+ To solve this, we put the witness outside the signed data in the transaction,
+ and allow the miner that includes the transaction to adjust the witness
+ as needed before including the transaction.
+ If miners maintain a policy of holding onto all new state tree nodes that
+ were created in, say, the last 24 hours, then they will necessarily have
+ all the needed info to update the Merkle branches for any transactions
+ published in the last 24 hours.
+\end_layout
+
+\begin_layout Standard
+Miners and full nodes in general no longer need to store any state.
+ This makes “fast syncing” much much faster (potentially a few seconds).
+ All of the thorny questions about state storage economics that lead to
+ the need for designs like rent (eg.
+ https://github.com/ethereum/EIPs/issues/35 18 http://github.com/ethereum/EIPs/iss
+ues/87 14 http://github.com/ethereum/EIPs/issues/88 11) and even the current
+ complex SSTORE cost/refund scheme disappear, and blockchain economics can
+ focus purely on pricing bandwidth and computation, a much simpler problem)
+ Even for state-storing clients, the account lists allow clients to pre-fetch
+ storage data from disk, possibly in parallel, greatly reducing their vulnerabil
+ity to DoS attacks.
+ In a sharded blockchain, security is increased by reshuffling clients between
+ shards frequently; the more quickly clients are reshuffled, the more adaptive
+ the adversaries that the scheme is secure against in a BFT model.
+ In a stateless client, this cost drops to zero, allowing clients to be
+ reshuffled between every single block that they create.
+ One problem that this introduces is: who does store state?
+\end_layout
+
+\begin_layout Standard
+Any new state trie object that gets created or touched gets by default stored
+ by all full nodes for 3 months.
+ This will likely be around 2.5 GB, and this is like “welfare storage” that
+ is provided by the network on a voluntary basis.
+ We know that this level of service definitely can be provided on a volunteer
+ basis, as the current light client infrastructure already depends on altruism.
+ After 3 months, clients can forget randomly, so that for example a state
+ trie object that was last touched 12 months ago would still be stored by
+ 25% of nodes, and an object last touched 60 months ago would still be stored
+ by 5% of nodes.
+ Clients can try to ask for these objects using the regular light client
+ protocol.
  
 \end_layout
 
-\begin_layout Plain Layout
-Q1: how does one commit: easy, sign and broadcast to network
+\begin_layout Standard
+Clients that wish to ensure availability of specific pieces of data much
+ longer can do so with payments in state channels, similar to file coing.
+ A client can set up channels with paid archival nodes, and make a conditional
+ payment in the channel of the form “I give up $0.0001, and by default this
+ payment is gone forever.
+ However, if you later provide an object with hash H, and I sign off on
+ it, then that $0.0001 instead goes to you”.
+ This would signal a credible commitment to being possibly willing to unlock
+ those funds for that object in the future, and archival nodes could enter
+ many millions of such arrangements and wait for data requests to appear
+ and become an income stream.
+ We expect dapp developers to get their users to randomly store some portion
+ of storage keys specifically related to their dapp in browser localstorage.
+ This could even deliberately be made easy to do in the web3 API.
+ In practice, we expect the number of “archival nodes” that simply store
+ everything forever to continue to be high enough to serve the network until
+ the total state size exceeds ~1-10 terabytes after the introduction of
+ sharding, so the above may not even be needed.
 \end_layout
 
-\begin_layout Plain Layout
-Q: how can one guarantee lots of other people are checking these guys? 
+\begin_layout Standard
+Links discussing related ideas:
 \end_layout
 
-\begin_layout Plain Layout
+\begin_layout Standard
+Further data availability schemes may be found here...
 
 \series bold
-Alternative: failure points are verifiable, so a trust model can be built
- up -> leads to centralisation, still be competition oligarchy...
-\end_layout
-
-\begin_layout Plain Layout
-
-\series bold
-A way to incentivise the light-client checking is perhaps through incentivising
- routing requests?
-\end_layout
-
-\begin_layout Plain Layout
-In future use a zero knowledge proof your row was correct.
+ IPFS for storage.
+ File coin.
+ They augment IPFS with a proof of storage over time.
+ However the key is do you also have th up to dat weitnesses, which is not
+ covered in their protocol.
+ Whenever witnesses come int hey update the state.
+ Doing this would greatly reduce costs and allow others to become miners.
  
-\series bold
-Seems as though recursive snarks are not necessary.
-\end_layout
-
-\begin_layout Plain Layout
-
-\series bold
-People aren't going to do it if it costs to check! 
 \end_layout
 
 \begin_layout Section
-
-\series bold
-Can the availability checking be detected with statistical analysis, without
- m*10 requests.
-\end_layout
-
-\begin_layout Plain Layout
-
-\series bold
-Request i from 100 actors, and see if it is returned.
- Assume at most 90% may be accomplices...
- 
-\end_layout
-
-\begin_layout Subsection
-Other 
-\end_layout
-
-\begin_layout Plain Layout
-A note - instead of bilinear accumulator, one can create certificates using
- merkle branches, and this would be quantum resistant but decrease the concrete
- efficiency.
- The security assumption of this scheme relies on the discrete log Assumption.
- 
-\end_layout
-
-\begin_layout Plain Layout
-In the end we can imagine eputation scores to be generated, what about transacti
-on fee to creator.
- 
-\end_layout
-
-\begin_layout Plain Layout
-Needs to commit the accumulator values, a problem in the g1 g2 setting,
- since a person can always grief by adding.
- Take the x_00 to be merkle certificates.
- 
-\series bold
-Could do it in a trusted way.
- 
-\end_layout
-
-\begin_layout Plain Layout
-
-\series bold
-I create a row , so x and g can verify and create.
- 
-\end_layout
-
-\begin_layout Plain Layout
-x creates a row, so g can verify
-\end_layout
-
-\begin_layout Plain Layout
-g creates a col, so n can verify and create a new table that is of size
- root(m) which someone else can verify.
- 
-\end_layout
-
-\begin_layout Plain Layout
-\align center
-\begin_inset Tabular
-<lyxtabular version="3" rows="7" columns="5">
-<features tabularvalignment="middle">
-<column alignment="center" valignment="top">
-<column alignment="center" valignment="top">
-<column alignment="center" valignment="top">
-<column alignment="center" valignment="top">
-<column alignment="center" valignment="top">
-<row>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-
-\series bold
-\begin_inset Formula $(d_{00},0,0),x_{00}$
-\end_inset
-
-
-\series default
- 
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-\begin_inset Formula $(d_{01},0,1),x_{01}$
-\end_inset
-
-
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-\begin_inset Formula $(f_{00},0,0),y_{00}$
-\end_inset
-
- 
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-\begin_inset Formula $(f_{01},0,1),y_{01}$
-\end_inset
-
-
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" rightline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-\begin_inset Formula $(f_{02},0,2),y_{02}$
-\end_inset
-
-
-\end_layout
-
-\end_inset
-</cell>
-</row>
-<row>
-<cell alignment="center" valignment="top" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-\begin_inset Formula $(d_{10},1,0),x_{10}$
-\end_inset
-
-
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-\begin_inset Formula $(d_{11},1,1),x_{11}$
-\end_inset
-
-
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-\begin_inset Formula $(f_{10},1,0),y_{10}$
-\end_inset
-
-
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-\begin_inset Formula $(f_{11},1,1),y_{11}$
-\end_inset
-
-
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" rightline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-\begin_inset Formula $(f_{12},1,2),y_{12}$
-\end_inset
-
-
-\end_layout
-
-\end_inset
-</cell>
-</row>
-<row>
-<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-\begin_inset Formula $x_{0*,}\bar{x}_{0*}$
-\end_inset
-
-
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-\begin_inset Formula $x_{1*,}\bar{x}_{1*}$
-\end_inset
-
-
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-f
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-f
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" rightline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-f
-\end_layout
-
-\end_inset
-</cell>
-</row>
-<row>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-\begin_inset Formula $(g_{00},0,0),z_{00}$
-\end_inset
-
- 
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-\begin_inset Formula $(g_{01},0,1),y_{01}$
-\end_inset
-
-
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-\begin_inset Formula $(g_{02},0,2),y_{02}$
-\end_inset
-
-
-\end_layout
-
-\end_inset
-</cell>
-</row>
-<row>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-\begin_inset Formula $(g_{10},1,0),y_{10}$
-\end_inset
-
-
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-\begin_inset Formula $(g_{11},1,1),y_{11}$
-\end_inset
-
-
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-\begin_inset Formula $(g_{12},1,2),y_{12}$
-\end_inset
-
-
-\end_layout
-
-\end_inset
-</cell>
-</row>
-<row>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-\begin_inset Formula $(g_{20},2,0),y_{20}$
-\end_inset
-
-
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-\begin_inset Formula $(g_{21},2,1),y_{21}$
-\end_inset
-
-
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-\begin_inset Formula $(g_{22},2,2),y_{22}$
-\end_inset
-
-
-\end_layout
-
-\end_inset
-</cell>
-</row>
-<row>
-<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-
-\end_layout
-
-\end_inset
-</cell>
-</row>
-</lyxtabular>
-
-\end_inset
-
-
-\end_layout
-
-\end_inset
-
-
-\end_layout
-
-\begin_layout Subsection
-Another note, if the attackers bandwidth is absorbed he can't respond to
- all the requests, so would need just more than the attackers bandwidth,
- which will be much less than gigabytes..with gigabyte sized blocks...
- still a bit rickety.
- 
-\end_layout
-
-\begin_layout Subsection
-Attacks against Dfinity 
-\end_layout
-
-\begin_layout Standard
-DKG for threshold groups registered on main chain.
-\end_layout
-
-\begin_layout Standard
-New threshold group is selected every round using the randomness produced.
- 
-\end_layout
-
-\begin_layout Standard
-One idea would just be to select the next threshold group if after a period
- of a few blocks, the threshold group has not responded.
- 
-\end_layout
-
-\begin_layout Standard
-
-\series bold
-Practical
-\series default
-: Not possible for an attacker to catch up with threshold relay...
- Therefore, can't get people in advance.
- What if he stalls a relay.
- Then we need a fall-back mechanism, then it's ok.
- 
-\end_layout
-
-\begin_layout Subsection
-Other 
-\end_layout
-
-\begin_layout Standard
-
-\series bold
-The whole point of an erasure code is that:
-\end_layout
-
-\begin_layout Standard
-
-\series bold
-(1) I can check all blocks for myself as long as the light client assumption
- holds
-\end_layout
-
-\begin_layout Standard
-
-\series bold
-(2) Reduces the amount of checking for everyone and utilises a fraud proof
- mechanism
-\end_layout
-
-\begin_layout Standard
-
-\series bold
-(3) without erasure codes we must rely on just consensus, which may not
- be enough for a sharded block-chain 
-\end_layout
-
-\begin_layout Standard
-
-\series bold
-(4)
-\end_layout
-
-\begin_layout Section*
-Data Availability, State Execution and fast shuffling
-\end_layout
-
-\begin_layout Section*
-Randomness:
-\end_layout
-
-\begin_layout Section*
 Virtual Machine - Web Assembly? 
+\end_layout
+
+\begin_layout Section
+Comparison With Other Coins
 \end_layout
 
 \begin_layout Standard
@@ -4056,138 +3405,6 @@ Availability can be decided quickly.
 \begin_layout Itemize
 Validity decided by a kind of Trubit systle mechanism, which means validity
  can then be checked quickly.
-\end_layout
-
-\begin_layout Standard
-Our Approach:
-\end_layout
-
-\begin_layout Itemize
-Solve availability:
-\begin_inset Separator latexpar
-\end_inset
-
-
-\end_layout
-
-\begin_deeper
-\begin_layout Itemize
-Block-chain based ..
- check the last 25 nodes for availability by downloading
-\end_layout
-
-\begin_layout Itemize
-dfinity based..
- similar, perhaps more robust.
- 
-\end_layout
-
-\begin_layout Itemize
-Proof based: Present a proof of data availability, i.e erasure coding a block
- and getting signatures from half of validators
-\end_layout
-
-\begin_layout Itemize
-Validators need only sign a hash, so the amount of work is constant* number
- of shards.
- 
-\end_layout
-
-\begin_layout Itemize
-
-\series bold
-Putting accountability into dfinity, all one needs is a numnber that gets
- revealed after the event.
- 
-\end_layout
-
-\begin_layout Itemize
-
-\series bold
-Q: How do we put in place marginal rewards on voting
-\end_layout
-
-\begin_layout Itemize
-
-\series bold
-A1: 
-\series default
-You sample a set of nodes to vote for availability, say 400; each round
- secret number per user, they need to compute a number based on this with
- their vote.
- ==> they have checked...
-\end_layout
-
-\begin_layout Itemize
-
-\series bold
-a1
-\series default
-: Lying is just contradicti9ng the majority...
- study largest block reversions in bitcoin...
- 
-\end_layout
-
-\begin_layout Itemize
-
-\series bold
-want key shares to be revealed dfinity style.
- 
-\end_layout
-
-\begin_layout Itemize
-
-\series bold
-A2: deposit into the chains to validate them, withdraw out when you can.
- 
-\end_layout
-
-\end_deeper
-\begin_layout Itemize
-Solve validity
-\end_layout
-
-\begin_layout Itemize
-truebit style execution 
-\begin_inset Separator latexpar
-\end_inset
-
-
-\end_layout
-
-\begin_deeper
-\begin_layout Itemize
-main disadvantage is the interactivity.
- 
-\end_layout
-
-\begin_layout Itemize
-one can imagine erasure codign execution steps to find efficient fraud proofs
-\end_layout
-
-\begin_layout Itemize
-
-\series bold
-Instead of a trubeit style verification game, one can just introduce hash
- check-points in compuitation.
- This reduces interactivity to 2 rounds, while keeping the amount of work
- done linear in the program size and 
-\end_layout
-
-\end_deeper
-\begin_layout Itemize
-Ensure that consensus is fork-free, fast and robust
-\end_layout
-
-\begin_layout Standard
-
-\series bold
-There is a new style file for papers submitted in 2016!
-\end_layout
-
-\begin_layout Standard
-NIPS requires electronic submissions.
- The electronic submission site is 
 \begin_inset Separator latexpar
 \end_inset
 

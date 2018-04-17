@@ -315,20 +315,6 @@ Summary
 
 \end_deeper
 \begin_layout Enumerate
-Virtual Machine 
-\end_layout
-
-\begin_deeper
-\begin_layout Enumerate
-EWASM VM
-\end_layout
-
-\begin_layout Enumerate
-Transpilers and the future of block-chain
-\end_layout
-
-\end_deeper
-\begin_layout Enumerate
 Solving the State Problem 
 \end_layout
 
@@ -343,6 +329,20 @@ Introducing rental fees to the block-chain
 
 \series bold
 Building on top of IPFS
+\end_layout
+
+\end_deeper
+\begin_layout Enumerate
+Virtual Machine 
+\end_layout
+
+\begin_deeper
+\begin_layout Enumerate
+EWASM VM
+\end_layout
+
+\begin_layout Enumerate
+Transpilers and the future of block-chain
 \end_layout
 
 \end_deeper
@@ -1555,195 +1555,19 @@ Efficient Storage
 \begin_layout Standard
 Apart from sharding, one idea to improve storage is to move to a model where
  there is an efficient market for storing data.
- Nodes Store When you want to store data an auction is done.
+ This will be crucial, the greatest expense to ethereum is the cost of storage,
+ so the better we can bring this down the more competitive our sharding
+ solution will be.
  
-\end_layout
-
-\begin_layout Section
-Storage 
-\end_layout
-
-\begin_layout Standard
-Suppose that we use the state transition lingo, STF(S, B) -> S’, where S
- and S’ are states, B is a block (or it could be a transaction T), and STF
- is the state transition function.
- Then, we can transform: S -> the state root of S (ie.
- the 32 byte root hash of the Merkle Patricia tree containing S) B -> (B,
- W), where W is a “witness” - a set of Merkle branches proving the values
- of all data that the execution of B accesses STF -> STF’, which takes as
- input a state root and a block-plus-witness, uses the witness as a “database”
- any time the execution of the block needs to read any accounts, storage
- keys or other state data [exiting with an error if the witness does not
- contain some piece of data that is being asked for], and outputs the new
- state root.
- That is, full nodes would only store state roots, and it would be miners’
- responsibility to package Merkle branches (“witnesses”) along with the
- blocks, and full nodes would download and verify these expanded blocks.
- It’s entirely possible for stateless full nodes and regular full nodes
- to exist alongside each other in a network; you could have translator nodes
- that take a block B, attach the required witness, and broadcast (B, W)
- on a different network protocol that stateless nodes live on; if a miner
- mines a block on this stateless network, then the witness can simply be
- stripped off, and the block rebroadcasted on the regular network.
-\end_layout
-
-\begin_layout Standard
-The simplest way to conceive the witness in a real protocol is to view it
- as an RLP-encoded list of objects, which could then be parsed by the client
- into a {sha3(x): x} key-value map; this map can then simply be plugged
- into an existing ethereum implementation as a “database”.
-\end_layout
-
-\begin_layout Standard
-One limitation of the above idea being applied to Ethereum as it exists
- today is that it would still require miners to be state-storing full nodes.
- To solve this, we put the witness outside the signed data in the transaction,
- and allow the miner that includes the transaction to adjust the witness
- as needed before including the transaction.
- If miners maintain a policy of holding onto all new state tree nodes that
- were created in, say, the last 24 hours, then they will necessarily have
- all the needed info to update the Merkle branches for any transactions
- published in the last 24 hours.
-\end_layout
-
-\begin_layout Standard
-Miners and full nodes in general no longer need to store any state.
- This makes “fast syncing” much much faster (potentially a few seconds).
- All of the thorny questions about state storage economics that lead to
- the need for designs like rent (eg.
- https://github.com/ethereum/EIPs/issues/35 18 http://github.com/ethereum/EIPs/iss
-ues/87 14 http://github.com/ethereum/EIPs/issues/88 11) and even the current
- complex SSTORE cost/refund scheme disappear, and blockchain economics can
- focus purely on pricing bandwidth and computation, a much simpler problem)
- Even for state-storing clients, the account lists allow clients to pre-fetch
- storage data from disk, possibly in parallel, greatly reducing their vulnerabil
-ity to DoS attacks.
- In a sharded blockchain, security is increased by reshuffling clients between
- shards frequently; the more quickly clients are reshuffled, the more adaptive
- the adversaries that the scheme is secure against in a BFT model.
- In a stateless client, this cost drops to zero, allowing clients to be
- reshuffled between every single block that they create.
- One problem that this introduces is: who does store state?
-\end_layout
-
-\begin_layout Standard
-Any new state trie object that gets created or touched gets by default stored
- by all full nodes for 3 months.
- This will likely be around 2.5 GB, and this is like “welfare storage” that
- is provided by the network on a voluntary basis.
- We know that this level of service definitely can be provided on a volunteer
- basis, as the current light client infrastructure already depends on altruism.
- After 3 months, clients can forget randomly, so that for example a state
- trie object that was last touched 12 months ago would still be stored by
- 25% of nodes, and an object last touched 60 months ago would still be stored
- by 5% of nodes.
- Clients can try to ask for these objects using the regular light client
- protocol.
- 
-\end_layout
-
-\begin_layout Standard
-Clients that wish to ensure availability of specific pieces of data much
- longer can do so with payments in state channels, similar to file coing.
- A client can set up channels with paid archival nodes, and make a conditional
- payment in the channel of the form “I give up $0.0001, and by default this
- payment is gone forever.
- However, if you later provide an object with hash H, and I sign off on
- it, then that $0.0001 instead goes to you”.
- This would signal a credible commitment to being possibly willing to unlock
- those funds for that object in the future, and archival nodes could enter
- many millions of such arrangements and wait for data requests to appear
- and become an income stream.
- We expect dapp developers to get their users to randomly store some portion
- of storage keys specifically related to their dapp in browser localstorage.
- This could even deliberately be made easy to do in the web3 API.
- In practice, we expect the number of “archival nodes” that simply store
- everything forever to continue to be high enough to serve the network until
- the total state size exceeds ~1-10 terabytes after the introduction of
- sharding, so the above may not even be needed.
-\end_layout
-
-\begin_layout Standard
-Links discussing related ideas:
-\end_layout
-
-\begin_layout Standard
-
-\series bold
-IPFS for storage/ Fiel coin
-\end_layout
-
-\begin_layout Standard
-
-\series bold
-Witnesses
-\series default
-: Key Question onf 
 \end_layout
 
 \begin_layout Section
 Separating Validity checking from State Execution
 \end_layout
 
-\begin_layout Itemize
-Key to security is fast shuffling.
- This means that the excutors can't do a lot.
- 
-\end_layout
-
-\begin_layout Itemize
-They attest to availability of blocks, fixed if others agree not so if others
- disagree.
- 
-\end_layout
-
-\begin_layout Section
-Execution disputes and Validity
-\end_layout
-
-\begin_layout Itemize
-Block creaters order and create transactions.
- The creators are sampled randomly from afixed set.
- 
-\end_layout
-
-\begin_layout Itemize
-They need a way of determining whether a transaction can pay them the gas
- to run the TX, and also if the ordering of transactions is correct.
- 
-\end_layout
-
-\begin_layout Itemize
-They need to do this without having access to all the state.
-\end_layout
-
-\begin_layout Itemize
-Light clients can store all this information, and transactions need to include
- access lists of data that they need.
- 
-\end_layout
-
-\begin_layout Itemize
-Zero knowledge proofs that I have the gas needed.
- 
-\end_layout
-
-\begin_layout Itemize
-Q: how can a transaction determine if two things are blocking.
- Just create a merkle tree that tracks these things.
- 
-\end_layout
-
-\begin_layout Itemize
-We can use a multi-dimensional eraure code to determine quickly if some
- data is available.
- 
-\end_layout
-
-\begin_layout Itemize
-Key to security is fast shuffling.
- This means that the excutors can't do a lot.
- They can't maintain state on each shard.
+\begin_layout Standard
+We can reduce the amount of checking that a validator does, which will enable
+ smart contracts to run very heavy processing algorithms.
  
 \end_layout
 
@@ -3345,615 +3169,134 @@ What are the implications to censoring of codes created by trust scores?
  
 \end_layout
 
+\begin_layout Section
+Solving The State Problem 
+\end_layout
+
 \begin_layout Standard
-\begin_inset Note Note
-status collapsed
+Suppose that we use the state transition lingo, STF(S, B) -> S’, where S
+ and S’ are states, B is a block (or it could be a transaction T), and STF
+ is the state transition function.
+ Then, we can transform: S -> the state root of S (ie.
+ the 32 byte root hash of the Merkle Patricia tree containing S) B -> (B,
+ W), where W is a “witness” - a set of Merkle branches proving the values
+ of all data that the execution of B accesses STF -> STF’, which takes as
+ input a state root and a block-plus-witness, uses the witness as a “database”
+ any time the execution of the block needs to read any accounts, storage
+ keys or other state data [exiting with an error if the witness does not
+ contain some piece of data that is being asked for], and outputs the new
+ state root.
+ That is, full nodes would only store state roots, and it would be miners’
+ responsibility to package Merkle branches (“witnesses”) along with the
+ blocks, and full nodes would download and verify these expanded blocks.
+ It’s entirely possible for stateless full nodes and regular full nodes
+ to exist alongside each other in a network; you could have translator nodes
+ that take a block B, attach the required witness, and broadcast (B, W)
+ on a different network protocol that stateless nodes live on; if a miner
+ mines a block on this stateless network, then the witness can simply be
+ stripped off, and the block rebroadcasted on the regular network.
+\end_layout
 
-\begin_layout Plain Layout
-THis process means someone can alwasy check that something is correct before
- creating more state, Hence we can pin down the fault on him.
+\begin_layout Standard
+The simplest way to conceive the witness in a real protocol is to view it
+ as an RLP-encoded list of objects, which could then be parsed by the client
+ into a {sha3(x): x} key-value map; this map can then simply be plugged
+ into an existing ethereum implementation as a “database”.
+\end_layout
+
+\begin_layout Standard
+One limitation of the above idea being applied to Ethereum as it exists
+ today is that it would still require miners to be state-storing full nodes.
+ To solve this, we put the witness outside the signed data in the transaction,
+ and allow the miner that includes the transaction to adjust the witness
+ as needed before including the transaction.
+ If miners maintain a policy of holding onto all new state tree nodes that
+ were created in, say, the last 24 hours, then they will necessarily have
+ all the needed info to update the Merkle branches for any transactions
+ published in the last 24 hours.
+\end_layout
+
+\begin_layout Standard
+Miners and full nodes in general no longer need to store any state.
+ This makes “fast syncing” much much faster (potentially a few seconds).
+ All of the thorny questions about state storage economics that lead to
+ the need for designs like rent (eg.
+ https://github.com/ethereum/EIPs/issues/35 18 http://github.com/ethereum/EIPs/iss
+ues/87 14 http://github.com/ethereum/EIPs/issues/88 11) and even the current
+ complex SSTORE cost/refund scheme disappear, and blockchain economics can
+ focus purely on pricing bandwidth and computation, a much simpler problem)
+ Even for state-storing clients, the account lists allow clients to pre-fetch
+ storage data from disk, possibly in parallel, greatly reducing their vulnerabil
+ity to DoS attacks.
+ In a sharded blockchain, security is increased by reshuffling clients between
+ shards frequently; the more quickly clients are reshuffled, the more adaptive
+ the adversaries that the scheme is secure against in a BFT model.
+ In a stateless client, this cost drops to zero, allowing clients to be
+ reshuffled between every single block that they create.
+ One problem that this introduces is: who does store state?
+\end_layout
+
+\begin_layout Standard
+Any new state trie object that gets created or touched gets by default stored
+ by all full nodes for 3 months.
+ This will likely be around 2.5 GB, and this is like “welfare storage” that
+ is provided by the network on a voluntary basis.
+ We know that this level of service definitely can be provided on a volunteer
+ basis, as the current light client infrastructure already depends on altruism.
+ After 3 months, clients can forget randomly, so that for example a state
+ trie object that was last touched 12 months ago would still be stored by
+ 25% of nodes, and an object last touched 60 months ago would still be stored
+ by 5% of nodes.
+ Clients can try to ask for these objects using the regular light client
+ protocol.
  
 \end_layout
 
-\begin_layout Plain Layout
-Q1: how does one commit: easy, sign and broadcast to network
+\begin_layout Standard
+Clients that wish to ensure availability of specific pieces of data much
+ longer can do so with payments in state channels, similar to file coing.
+ A client can set up channels with paid archival nodes, and make a conditional
+ payment in the channel of the form “I give up $0.0001, and by default this
+ payment is gone forever.
+ However, if you later provide an object with hash H, and I sign off on
+ it, then that $0.0001 instead goes to you”.
+ This would signal a credible commitment to being possibly willing to unlock
+ those funds for that object in the future, and archival nodes could enter
+ many millions of such arrangements and wait for data requests to appear
+ and become an income stream.
+ We expect dapp developers to get their users to randomly store some portion
+ of storage keys specifically related to their dapp in browser localstorage.
+ This could even deliberately be made easy to do in the web3 API.
+ In practice, we expect the number of “archival nodes” that simply store
+ everything forever to continue to be high enough to serve the network until
+ the total state size exceeds ~1-10 terabytes after the introduction of
+ sharding, so the above may not even be needed.
 \end_layout
 
-\begin_layout Plain Layout
-Q: how can one guarantee lots of other people are checking these guys? 
+\begin_layout Standard
+Links discussing related ideas:
 \end_layout
 
-\begin_layout Plain Layout
+\begin_layout Standard
+Further data availability schemes may be found here...
 
 \series bold
-Alternative: failure points are verifiable, so a trust model can be built
- up -> leads to centralisation, still be competition oligarchy...
-\end_layout
-
-\begin_layout Plain Layout
-
-\series bold
-A way to incentivise the light-client checking is perhaps through incentivising
- routing requests?
-\end_layout
-
-\begin_layout Plain Layout
-In future use a zero knowledge proof your row was correct.
+ IPFS for storage.
+ File coin.
+ They augment IPFS with a proof of storage over time.
+ However the key is do you also have th up to dat weitnesses, which is not
+ covered in their protocol.
+ Whenever witnesses come int hey update the state.
+ Doing this would greatly reduce costs and allow others to become miners.
  
-\series bold
-Seems as though recursive snarks are not necessary.
-\end_layout
-
-\begin_layout Plain Layout
-
-\series bold
-People aren't going to do it if it costs to check! 
 \end_layout
 
 \begin_layout Section
-
-\series bold
-Can the availability checking be detected with statistical analysis, without
- m*10 requests.
-\end_layout
-
-\begin_layout Plain Layout
-
-\series bold
-Request i from 100 actors, and see if it is returned.
- Assume at most 90% may be accomplices...
- 
-\end_layout
-
-\begin_layout Subsection
-Other 
-\end_layout
-
-\begin_layout Plain Layout
-A note - instead of bilinear accumulator, one can create certificates using
- merkle branches, and this would be quantum resistant but decrease the concrete
- efficiency.
- The security assumption of this scheme relies on the discrete log Assumption.
- 
-\end_layout
-
-\begin_layout Plain Layout
-In the end we can imagine eputation scores to be generated, what about transacti
-on fee to creator.
- 
-\end_layout
-
-\begin_layout Plain Layout
-Needs to commit the accumulator values, a problem in the g1 g2 setting,
- since a person can always grief by adding.
- Take the x_00 to be merkle certificates.
- 
-\series bold
-Could do it in a trusted way.
- 
-\end_layout
-
-\begin_layout Plain Layout
-
-\series bold
-I create a row , so x and g can verify and create.
- 
-\end_layout
-
-\begin_layout Plain Layout
-x creates a row, so g can verify
-\end_layout
-
-\begin_layout Plain Layout
-g creates a col, so n can verify and create a new table that is of size
- root(m) which someone else can verify.
- 
-\end_layout
-
-\begin_layout Plain Layout
-\align center
-\begin_inset Tabular
-<lyxtabular version="3" rows="7" columns="5">
-<features tabularvalignment="middle">
-<column alignment="center" valignment="top">
-<column alignment="center" valignment="top">
-<column alignment="center" valignment="top">
-<column alignment="center" valignment="top">
-<column alignment="center" valignment="top">
-<row>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-
-\series bold
-\begin_inset Formula $(d_{00},0,0),x_{00}$
-\end_inset
-
-
-\series default
- 
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-\begin_inset Formula $(d_{01},0,1),x_{01}$
-\end_inset
-
-
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-\begin_inset Formula $(f_{00},0,0),y_{00}$
-\end_inset
-
- 
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-\begin_inset Formula $(f_{01},0,1),y_{01}$
-\end_inset
-
-
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" rightline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-\begin_inset Formula $(f_{02},0,2),y_{02}$
-\end_inset
-
-
-\end_layout
-
-\end_inset
-</cell>
-</row>
-<row>
-<cell alignment="center" valignment="top" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-\begin_inset Formula $(d_{10},1,0),x_{10}$
-\end_inset
-
-
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-\begin_inset Formula $(d_{11},1,1),x_{11}$
-\end_inset
-
-
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-\begin_inset Formula $(f_{10},1,0),y_{10}$
-\end_inset
-
-
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-\begin_inset Formula $(f_{11},1,1),y_{11}$
-\end_inset
-
-
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" rightline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-\begin_inset Formula $(f_{12},1,2),y_{12}$
-\end_inset
-
-
-\end_layout
-
-\end_inset
-</cell>
-</row>
-<row>
-<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-\begin_inset Formula $x_{0*,}\bar{x}_{0*}$
-\end_inset
-
-
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-\begin_inset Formula $x_{1*,}\bar{x}_{1*}$
-\end_inset
-
-
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-f
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-f
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" rightline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-f
-\end_layout
-
-\end_inset
-</cell>
-</row>
-<row>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-\begin_inset Formula $(g_{00},0,0),z_{00}$
-\end_inset
-
- 
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-\begin_inset Formula $(g_{01},0,1),y_{01}$
-\end_inset
-
-
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-\begin_inset Formula $(g_{02},0,2),y_{02}$
-\end_inset
-
-
-\end_layout
-
-\end_inset
-</cell>
-</row>
-<row>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-\begin_inset Formula $(g_{10},1,0),y_{10}$
-\end_inset
-
-
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-\begin_inset Formula $(g_{11},1,1),y_{11}$
-\end_inset
-
-
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-\begin_inset Formula $(g_{12},1,2),y_{12}$
-\end_inset
-
-
-\end_layout
-
-\end_inset
-</cell>
-</row>
-<row>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-\begin_inset Formula $(g_{20},2,0),y_{20}$
-\end_inset
-
-
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-\begin_inset Formula $(g_{21},2,1),y_{21}$
-\end_inset
-
-
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-\begin_inset Formula $(g_{22},2,2),y_{22}$
-\end_inset
-
-
-\end_layout
-
-\end_inset
-</cell>
-</row>
-<row>
-<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-
-\end_layout
-
-\end_inset
-</cell>
-</row>
-</lyxtabular>
-
-\end_inset
-
-
-\end_layout
-
-\end_inset
-
-
-\end_layout
-
-\begin_layout Subsection
-Another note, if the attackers bandwidth is absorbed he can't respond to
- all the requests, so would need just more than the attackers bandwidth,
- which will be much less than gigabytes..with gigabyte sized blocks...
- still a bit rickety.
- 
-\end_layout
-
-\begin_layout Subsection
-Attacks against Dfinity 
-\end_layout
-
-\begin_layout Standard
-DKG for threshold groups registered on main chain.
-\end_layout
-
-\begin_layout Standard
-New threshold group is selected every round using the randomness produced.
- 
-\end_layout
-
-\begin_layout Standard
-One idea would just be to select the next threshold group if after a period
- of a few blocks, the threshold group has not responded.
- 
-\end_layout
-
-\begin_layout Standard
-
-\series bold
-Practical
-\series default
-: Not possible for an attacker to catch up with threshold relay...
- Therefore, can't get people in advance.
- What if he stalls a relay.
- Then we need a fall-back mechanism, then it's ok.
- 
-\end_layout
-
-\begin_layout Subsection
-Other 
-\end_layout
-
-\begin_layout Standard
-
-\series bold
-The whole point of an erasure code is that:
-\end_layout
-
-\begin_layout Standard
-
-\series bold
-(1) I can check all blocks for myself as long as the light client assumption
- holds
-\end_layout
-
-\begin_layout Standard
-
-\series bold
-(2) Reduces the amount of checking for everyone and utilises a fraud proof
- mechanism
-\end_layout
-
-\begin_layout Standard
-
-\series bold
-(3) without erasure codes we must rely on just consensus, which may not
- be enough for a sharded block-chain 
-\end_layout
-
-\begin_layout Standard
-
-\series bold
-(4)
-\end_layout
-
-\begin_layout Section*
-Data Availability, State Execution and fast shuffling
-\end_layout
-
-\begin_layout Section*
-Randomness:
-\end_layout
-
-\begin_layout Section*
 Virtual Machine - Web Assembly? 
+\end_layout
+
+\begin_layout Section
+Comparison With Other Coins
 \end_layout
 
 \begin_layout Standard
@@ -4062,138 +3405,6 @@ Availability can be decided quickly.
 \begin_layout Itemize
 Validity decided by a kind of Trubit systle mechanism, which means validity
  can then be checked quickly.
-\end_layout
-
-\begin_layout Standard
-Our Approach:
-\end_layout
-
-\begin_layout Itemize
-Solve availability:
-\begin_inset Separator latexpar
-\end_inset
-
-
-\end_layout
-
-\begin_deeper
-\begin_layout Itemize
-Block-chain based ..
- check the last 25 nodes for availability by downloading
-\end_layout
-
-\begin_layout Itemize
-dfinity based..
- similar, perhaps more robust.
- 
-\end_layout
-
-\begin_layout Itemize
-Proof based: Present a proof of data availability, i.e erasure coding a block
- and getting signatures from half of validators
-\end_layout
-
-\begin_layout Itemize
-Validators need only sign a hash, so the amount of work is constant* number
- of shards.
- 
-\end_layout
-
-\begin_layout Itemize
-
-\series bold
-Putting accountability into dfinity, all one needs is a numnber that gets
- revealed after the event.
- 
-\end_layout
-
-\begin_layout Itemize
-
-\series bold
-Q: How do we put in place marginal rewards on voting
-\end_layout
-
-\begin_layout Itemize
-
-\series bold
-A1: 
-\series default
-You sample a set of nodes to vote for availability, say 400; each round
- secret number per user, they need to compute a number based on this with
- their vote.
- ==> they have checked...
-\end_layout
-
-\begin_layout Itemize
-
-\series bold
-a1
-\series default
-: Lying is just contradicti9ng the majority...
- study largest block reversions in bitcoin...
- 
-\end_layout
-
-\begin_layout Itemize
-
-\series bold
-want key shares to be revealed dfinity style.
- 
-\end_layout
-
-\begin_layout Itemize
-
-\series bold
-A2: deposit into the chains to validate them, withdraw out when you can.
- 
-\end_layout
-
-\end_deeper
-\begin_layout Itemize
-Solve validity
-\end_layout
-
-\begin_layout Itemize
-truebit style execution 
-\begin_inset Separator latexpar
-\end_inset
-
-
-\end_layout
-
-\begin_deeper
-\begin_layout Itemize
-main disadvantage is the interactivity.
- 
-\end_layout
-
-\begin_layout Itemize
-one can imagine erasure codign execution steps to find efficient fraud proofs
-\end_layout
-
-\begin_layout Itemize
-
-\series bold
-Instead of a trubeit style verification game, one can just introduce hash
- check-points in compuitation.
- This reduces interactivity to 2 rounds, while keeping the amount of work
- done linear in the program size and 
-\end_layout
-
-\end_deeper
-\begin_layout Itemize
-Ensure that consensus is fork-free, fast and robust
-\end_layout
-
-\begin_layout Standard
-
-\series bold
-There is a new style file for papers submitted in 2016!
-\end_layout
-
-\begin_layout Standard
-NIPS requires electronic submissions.
- The electronic submission site is 
 \begin_inset Separator latexpar
 \end_inset
 
@@ -4216,6 +3427,10 @@ https://cmt.research.microsoft.com/NIPS2016/
 \end_layout
 
 \begin_layout Standard
+\begin_inset Note Note
+status collapsed
+
+\begin_layout Plain Layout
 Please read carefully the instructions below and follow them faithfully.
 \end_layout
 
@@ -4223,7 +3438,7 @@ Please read carefully the instructions below and follow them faithfully.
 Style
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 Papers to be submitted to NIPS 2016 must be prepared according to the instructio
 ns presented here.
  Papers may only be up to eight pages long, including figures.
@@ -4236,7 +3451,7 @@ containing only acknowledgments and/or cited references
  considered for presentation at the conference.
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 The margins in 2016 are the same as since 2007, which allow for 
 \begin_inset Formula $\sim$
 \end_inset
@@ -4248,7 +3463,7 @@ The margins in 2016 are the same as since 2007, which allow for
  more words in the paper compared to earlier years.
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 Authors are required to use the NIPS \SpecialChar LaTeX
  style files obtainable at the NIPS
  website as indicated below.
@@ -4260,7 +3475,7 @@ Authors are required to use the NIPS \SpecialChar LaTeX
 Retrieval of style files
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 The style files for NIPS and other conference information are available
  on the World Wide Web at 
 \begin_inset Separator latexpar
@@ -4269,7 +3484,7 @@ The style files for NIPS and other conference information are available
 
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 \align center
 \begin_inset Flex URL
 status collapsed
@@ -4284,7 +3499,7 @@ http://www.nips.cc/
  
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 The file 
 \family typewriter
 nips_2016.pdf
@@ -4293,7 +3508,7 @@ nips_2016.pdf
  your NIPS paper must satisfy.
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 The only supported style file for NIPS 2016 is 
 \family typewriter
 nips_2016.sty
@@ -4306,7 +3521,7 @@ Previous style files for \SpecialChar LaTeX
  2.09, Microsoft Word, and RTF are no longer supported!
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 The new \SpecialChar LaTeX
  style file contains two optional arguments: 
 \family typewriter
@@ -4323,7 +3538,7 @@ natbib
  package for you in case of package clash.
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 At submission time, please omit the 
 \family typewriter
 final
@@ -4338,7 +3553,7 @@ not
  generation of camera-ready copies.
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 The file 
 \family typewriter
 nips_2016.tex
@@ -4356,7 +3571,7 @@ shell
  the paper with your own.
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 The formatting instructions contained in these style files are summarized
  in Sections 
 \begin_inset CommandInset ref
@@ -4386,7 +3601,7 @@ reference "others"
 General formatting instructions
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 \begin_inset CommandInset label
 LatexCommand label
 name "gen_inst"
@@ -4396,7 +3611,7 @@ name "gen_inst"
 
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 The text must be confined within a rectangle 5.5
 \begin_inset space ~
 \end_inset
@@ -4446,7 +3661,7 @@ line space (5.5 points), with no indentation.
  
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 The paper title should be 17
 \begin_inset space ~
 \end_inset
@@ -4481,7 +3696,7 @@ inch (6
 picas) from the top of the page.
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 For the final version, authors' names are set in boldface, and each name
  is centered above the corresponding address.
  The lead author's name is to be listed first (left-most), and the co-authors'
@@ -4490,7 +3705,7 @@ For the final version, authors' names are set in boldface, and each name
  side.
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 Please pay special attention to the instructions in Section 
 \begin_inset CommandInset ref
 LatexCommand ref
@@ -4505,7 +3720,7 @@ reference "others"
 Headings: first level
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 \begin_inset Note Note
 status collapsed
 
@@ -4613,7 +3828,7 @@ Slashing condition should be based on there being a valid proof of availability,
 
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 \begin_inset Note Note
 status collapsed
 
@@ -4705,7 +3920,7 @@ More concretely, our voting scheme:
 
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 \begin_inset Note Note
 status collapsed
 
@@ -4743,7 +3958,7 @@ There are significant economies of scale that come with proof of work mining:
 
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 \begin_inset CommandInset label
 LatexCommand label
 name "headings"
@@ -4753,12 +3968,12 @@ name "headings"
 
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 All headings should be lower case (except for first word and proper nouns),
  flush left, and bold.
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 First-level headings should be in 12-point type.
 \end_layout
 
@@ -4766,7 +3981,7 @@ First-level headings should be in 12-point type.
 Headings: second level
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 Second-level headings should be in 10-point type.
 \end_layout
 
@@ -4774,7 +3989,7 @@ Second-level headings should be in 10-point type.
 Headings: third level
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 Third-level headings should be in 10-point type.
 \end_layout
 
@@ -4782,7 +3997,7 @@ Third-level headings should be in 10-point type.
 Paragraphs
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 There is also a 
 \family typewriter
 
@@ -4801,7 +4016,7 @@ em of space.
 Citations, figures, tables, references
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 \begin_inset CommandInset label
 LatexCommand label
 name "others"
@@ -4811,7 +4026,7 @@ name "others"
 
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 These instructions apply to everyone.
 \end_layout
 
@@ -4819,7 +4034,7 @@ These instructions apply to everyone.
 Citations within the text
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 The 
 \family typewriter
 natbib
@@ -4831,7 +4046,7 @@ natbib
  as long as it is used consistently.
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 The documentation for 
 \family typewriter
 natbib
@@ -4843,7 +4058,7 @@ natbib
 
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 \align center
 \begin_inset Flex URL
 status collapsed
@@ -4858,7 +4073,7 @@ http://mirrors.ctan.org/macros/latex/contrib/natbib/natnotes.pdf
  
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 Of note is the command 
 \family typewriter
 
@@ -4869,7 +4084,7 @@ citet
  For example, 
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 \noindent
 \begin_inset ERT
 status open
@@ -4910,7 +4125,7 @@ end{verbatim}
 
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 \noindent
 produces 
 \end_layout
@@ -4923,7 +4138,7 @@ Hasselmo, et al.
 (1995) investigated…
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 If you wish to load the 
 \family typewriter
 natbib
@@ -4935,7 +4150,7 @@ nips_2016
  package: 
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 \noindent
 \begin_inset ERT
 status open
@@ -4974,7 +4189,7 @@ end{verbatim}
 
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 \noindent
 If 
 \family typewriter
@@ -4988,7 +4203,7 @@ nonatbib
  when loading the style file: 
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 \noindent
 \begin_inset ERT
 status open
@@ -5027,7 +4242,7 @@ end{verbatim}
 
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 \noindent
 As submission is double blind, refer to your own published work in the third
  person.
@@ -5072,7 +4287,7 @@ Anonymous.
 Footnotes
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 Footnotes should be used sparingly.
  If you do require a footnote, indicate footnotes with a number
 \begin_inset Foot
@@ -5097,7 +4312,7 @@ inches (12
 picas).
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 Note that footnotes are properly typeset 
 \emph on
 after
@@ -5119,7 +4334,7 @@ As in this example.
 Figures
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 All artwork must be neat, clean, and legible.
  Lines should be dark enough for purposes of reproduction.
  The figure number and caption always appear after the figure.
@@ -5129,7 +4344,7 @@ All artwork must be neat, clean, and legible.
  nouns); figures are numbered consecutively.
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 You may use color figures.
  However, it is best for the figure captions and the paper body to be legible
  if the paper is printed in either black/white or in color.
@@ -5205,7 +4420,7 @@ Sample figure caption.
 Tables
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 All tables must be centered, neat, clean and legible.
  The table number and title always appear before the table.
  See Table
@@ -5222,14 +4437,14 @@ reference "sample-table"
 .
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 Place one line space before the table title, one line space after the table
  title, and one line space after the table.
  The table title must be lower case (except for first word and proper nouns);
  tables are numbered consecutively.
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 Note that publication-quality tables 
 \emph on
 do not contain vertical rules.
@@ -5247,7 +4462,7 @@ booktabs
 
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 \align center
 \begin_inset Flex URL
 status collapsed
@@ -5262,7 +4477,7 @@ https://www.ctan.org/pkg/booktabs
  
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 This package was used to typeset Table
 \begin_inset space ~
 \end_inset
@@ -5277,7 +4492,7 @@ reference "sample-table"
 .
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 \begin_inset Float table
 placement t
 wide false
@@ -5483,7 +4698,7 @@ up to
 Final instructions
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 Do not change any aspects of the formatting parameters in the style files.
  In particular, do not modify the width or length of the rectangle the text
  should fit into, and do not change font sizes (except perhaps in the 
@@ -5498,7 +4713,7 @@ References
 Preparing PDF files
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 Please prepare submission files with paper size 
 \begin_inset Quotes eld
 \end_inset
@@ -5518,7 +4733,7 @@ A4.
 
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 Fonts were the main cause of problems in the past years.
  Your PDF file must only contain Type 1 or Embedded TrueType fonts.
  Here are a few instructions to achieve this.
@@ -5579,7 +4794,7 @@ http://www.emfield.org/icuwb2010/downloads/IEEE-PDF-SpecV32.pdf
 \end_layout
 
 \begin_deeper
-\begin_layout Standard
+\begin_layout Plain Layout
 The 
 \family typewriter
 
@@ -5590,7 +4805,7 @@ bbold
  You should use the equivalent AMS Fonts: 
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 \noindent
 \begin_inset ERT
 status open
@@ -5625,7 +4840,7 @@ end{verbatim}
 
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 \noindent
 followed by, e.g., 
 \family typewriter
@@ -5662,7 +4877,7 @@ mathbb{C}
  
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 \noindent
 \begin_inset ERT
 status open
@@ -5733,7 +4948,7 @@ end{verbatim}
 
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 \noindent
 Note that 
 \family typewriter
@@ -5747,7 +4962,7 @@ amssymb
 \end_layout
 
 \end_deeper
-\begin_layout Standard
+\begin_layout Plain Layout
 If your file contains type 3 fonts or non embedded TrueType fonts, we will
  ask you to fix it.
 \end_layout
@@ -5757,7 +4972,7 @@ Margins in \SpecialChar LaTeX
 
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 Most of the margin problems come from figures positioned by hand using 
 \family typewriter
 special
@@ -5776,7 +4991,7 @@ graphicx
  example below: 
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 \noindent
 \begin_inset ERT
 status open
@@ -5824,7 +5039,7 @@ end{verbatim}
 
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 \noindent
 See Section 4.4 in the graphics bundle documentation (
 \begin_inset Flex URL
@@ -5840,7 +5055,7 @@ http://mirrors.ctan.org/macros/latex/required/graphics/grfguide.pdf
 )
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 A number of width problems arise when \SpecialChar LaTeX
  cannot properly hyphenate a line.
  Please give 
@@ -5867,11 +5082,16 @@ LaTeX
 Acknowledgments
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 Use unnumbered third level headings for the acknowledgments.
  All acknowledgments go at the end of the paper.
  Do not include acknowledgments in the anonymized submission, only in the
  final paper.
+\end_layout
+
+\end_inset
+
+
 \end_layout
 
 \begin_layout Section*
