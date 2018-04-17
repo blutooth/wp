@@ -228,6 +228,14 @@ Validators then vote on the availability of blocks to the network, and are
  
 \end_layout
 
+\begin_layout Standard
+
+\series bold
+Our key ambitions are to reduce costs and improve scalability - this will
+ be a constant theme throughout this work.
+ 
+\end_layout
+
 \begin_layout Subsection
 Protocol Structure 
 \end_layout
@@ -3293,6 +3301,80 @@ Further data availability schemes may be found here...
 
 \begin_layout Section
 Virtual Machine - Web Assembly? 
+\end_layout
+
+\begin_layout Standard
+Fast & Efficient: To truly distinguish Ethereum as the World Computer we
+ need to have a very performant VM.
+ The current architecture of the VM is one of the greatest blockers to raw
+ performance.
+ WebAssembly aims to execute at near native speed by taking advantage of
+ common hardware capabilities available on a wide range of platforms.
+ This will open the door to a wide array of uses that require performance/throug
+hput.
+ 
+\end_layout
+
+\begin_layout Standard
+Toolchain Compatibility: A LLVM front-end for WASM is part of the MVP.
+ This will Allow developers to write contracts and reuse applications written
+ in common languages such as C/C++, go and rust.
+ 
+\end_layout
+
+\begin_layout Standard
+Portability: WASM is targeted to be deployed in all the major web browsers
+ which will result in it being one of the most widely deployed VM architecture.
+ Contracts compiled to eWASM will share compatibility with any standard
+ WASM environment.
+ Which will make running a program either directly on Ethereum, on a cloud
+ hosting environment, or on one's local machine - a frictionless process.
+ 
+\end_layout
+
+\begin_layout Standard
+Optional And Flexible Metering: Metering the VM adds overhead but is essential
+ for running untrusted code.
+ If code is trusted then metering maybe optional.
+ eWASM defines metering as an optional layer to accommodate for these use
+ cases.
+ 
+\end_layout
+
+\begin_layout Standard
+Metering VMs is the same concept as electrical power companies have when
+ charging you for the amount of electricity that you used.
+ With VM's we attempt to get a measurement of computation time of some code
+ and instead of electricity used, you are charged for the CPU's time used.
+ We call this metering.
+\end_layout
+
+\begin_layout Standard
+
+\series bold
+Not off the bat, a transpiler will have to be created to compile existing
+ EVM code into eWASM.
+ As far as other High level languages you should be able to use an language
+ that can be compiled by LLVM ( c/c++/rust/go)
+\end_layout
+
+\begin_layout Standard
+Part of the project goal is to eliminate nasal-demons.
+ It's in the MVP.
+ There are still a couple of edge case like sign values on NaNs but they
+ can be canonicalized by AST transforms.
+\end_layout
+
+\begin_layout Standard
+
+\series bold
+Most languages with a virtual machine can be transpiled, meaning you could
+ run the contracts of some other coin in here.
+ If we use same base as Zilliqa or Dfinity, then we can re-use any transpilers
+ they build.
+ `Ultimately, the battle will not be won on language features, but on cost.
+ Since in the future, you will be able to deploy any contract on any system.
+ 
 \end_layout
 
 \begin_layout Section

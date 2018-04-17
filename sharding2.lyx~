@@ -3295,6 +3295,80 @@ Further data availability schemes may be found here...
 Virtual Machine - Web Assembly? 
 \end_layout
 
+\begin_layout Standard
+Fast & Efficient: To truly distinguish Ethereum as the World Computer we
+ need to have a very performant VM.
+ The current architecture of the VM is one of the greatest blockers to raw
+ performance.
+ WebAssembly aims to execute at near native speed by taking advantage of
+ common hardware capabilities available on a wide range of platforms.
+ This will open the door to a wide array of uses that require performance/throug
+hput.
+ 
+\end_layout
+
+\begin_layout Standard
+Toolchain Compatibility: A LLVM front-end for WASM is part of the MVP.
+ This will Allow developers to write contracts and reuse applications written
+ in common languages such as C/C++, go and rust.
+ 
+\end_layout
+
+\begin_layout Standard
+Portability: WASM is targeted to be deployed in all the major web browsers
+ which will result in it being one of the most widely deployed VM architecture.
+ Contracts compiled to eWASM will share compatibility with any standard
+ WASM environment.
+ Which will make running a program either directly on Ethereum, on a cloud
+ hosting environment, or on one's local machine - a frictionless process.
+ 
+\end_layout
+
+\begin_layout Standard
+Optional And Flexible Metering: Metering the VM adds overhead but is essential
+ for running untrusted code.
+ If code is trusted then metering maybe optional.
+ eWASM defines metering as an optional layer to accommodate for these use
+ cases.
+ 
+\end_layout
+
+\begin_layout Standard
+Metering VMs is the same concept as electrical power companies have when
+ charging you for the amount of electricity that you used.
+ With VM's we attempt to get a measurement of computation time of some code
+ and instead of electricity used, you are charged for the CPU's time used.
+ We call this metering.
+\end_layout
+
+\begin_layout Standard
+
+\series bold
+Not off the bat, a transpiler will have to be created to compile existing
+ EVM code into eWASM.
+ As far as other High level languages you should be able to use an language
+ that can be compiled by LLVM ( c/c++/rust/go)
+\end_layout
+
+\begin_layout Standard
+Part of the project goal is to eliminate nasal-demons.
+ It's in the MVP.
+ There are still a couple of edge case like sign values on NaNs but they
+ can be canonicalized by AST transforms.
+\end_layout
+
+\begin_layout Standard
+
+\series bold
+Most languages with a virtual machine can be transpiled, meaning you could
+ run the contracts of some other coin in here.
+ If we use same base as Zilliqa or Dfinity, then we can re-use any transpilers
+ they build.
+ `Ultimately, the battle will not be won on language features, but on cost.
+ Since in the future, you will be able to deploy any contract on any system.
+ 
+\end_layout
+
 \begin_layout Section
 Comparison With Other Coins
 \end_layout
@@ -3427,6 +3501,10 @@ https://cmt.research.microsoft.com/NIPS2016/
 \end_layout
 
 \begin_layout Standard
+\begin_inset Note Note
+status collapsed
+
+\begin_layout Plain Layout
 Please read carefully the instructions below and follow them faithfully.
 \end_layout
 
@@ -3434,7 +3512,7 @@ Please read carefully the instructions below and follow them faithfully.
 Style
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 Papers to be submitted to NIPS 2016 must be prepared according to the instructio
 ns presented here.
  Papers may only be up to eight pages long, including figures.
@@ -3447,7 +3525,7 @@ containing only acknowledgments and/or cited references
  considered for presentation at the conference.
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 The margins in 2016 are the same as since 2007, which allow for 
 \begin_inset Formula $\sim$
 \end_inset
@@ -3459,7 +3537,7 @@ The margins in 2016 are the same as since 2007, which allow for
  more words in the paper compared to earlier years.
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 Authors are required to use the NIPS \SpecialChar LaTeX
  style files obtainable at the NIPS
  website as indicated below.
@@ -3471,7 +3549,7 @@ Authors are required to use the NIPS \SpecialChar LaTeX
 Retrieval of style files
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 The style files for NIPS and other conference information are available
  on the World Wide Web at 
 \begin_inset Separator latexpar
@@ -3480,7 +3558,7 @@ The style files for NIPS and other conference information are available
 
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 \align center
 \begin_inset Flex URL
 status collapsed
@@ -3495,7 +3573,7 @@ http://www.nips.cc/
  
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 The file 
 \family typewriter
 nips_2016.pdf
@@ -3504,7 +3582,7 @@ nips_2016.pdf
  your NIPS paper must satisfy.
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 The only supported style file for NIPS 2016 is 
 \family typewriter
 nips_2016.sty
@@ -3517,7 +3595,7 @@ Previous style files for \SpecialChar LaTeX
  2.09, Microsoft Word, and RTF are no longer supported!
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 The new \SpecialChar LaTeX
  style file contains two optional arguments: 
 \family typewriter
@@ -3534,7 +3612,7 @@ natbib
  package for you in case of package clash.
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 At submission time, please omit the 
 \family typewriter
 final
@@ -3549,7 +3627,7 @@ not
  generation of camera-ready copies.
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 The file 
 \family typewriter
 nips_2016.tex
@@ -3567,7 +3645,7 @@ shell
  the paper with your own.
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 The formatting instructions contained in these style files are summarized
  in Sections 
 \begin_inset CommandInset ref
@@ -3597,7 +3675,7 @@ reference "others"
 General formatting instructions
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 \begin_inset CommandInset label
 LatexCommand label
 name "gen_inst"
@@ -3607,7 +3685,7 @@ name "gen_inst"
 
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 The text must be confined within a rectangle 5.5
 \begin_inset space ~
 \end_inset
@@ -3657,7 +3735,7 @@ line space (5.5 points), with no indentation.
  
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 The paper title should be 17
 \begin_inset space ~
 \end_inset
@@ -3692,7 +3770,7 @@ inch (6
 picas) from the top of the page.
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 For the final version, authors' names are set in boldface, and each name
  is centered above the corresponding address.
  The lead author's name is to be listed first (left-most), and the co-authors'
@@ -3701,7 +3779,7 @@ For the final version, authors' names are set in boldface, and each name
  side.
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 Please pay special attention to the instructions in Section 
 \begin_inset CommandInset ref
 LatexCommand ref
@@ -3716,7 +3794,7 @@ reference "others"
 Headings: first level
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 \begin_inset Note Note
 status collapsed
 
@@ -3824,7 +3902,7 @@ Slashing condition should be based on there being a valid proof of availability,
 
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 \begin_inset Note Note
 status collapsed
 
@@ -3916,7 +3994,7 @@ More concretely, our voting scheme:
 
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 \begin_inset Note Note
 status collapsed
 
@@ -3954,7 +4032,7 @@ There are significant economies of scale that come with proof of work mining:
 
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 \begin_inset CommandInset label
 LatexCommand label
 name "headings"
@@ -3964,12 +4042,12 @@ name "headings"
 
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 All headings should be lower case (except for first word and proper nouns),
  flush left, and bold.
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 First-level headings should be in 12-point type.
 \end_layout
 
@@ -3977,7 +4055,7 @@ First-level headings should be in 12-point type.
 Headings: second level
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 Second-level headings should be in 10-point type.
 \end_layout
 
@@ -3985,7 +4063,7 @@ Second-level headings should be in 10-point type.
 Headings: third level
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 Third-level headings should be in 10-point type.
 \end_layout
 
@@ -3993,7 +4071,7 @@ Third-level headings should be in 10-point type.
 Paragraphs
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 There is also a 
 \family typewriter
 
@@ -4012,7 +4090,7 @@ em of space.
 Citations, figures, tables, references
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 \begin_inset CommandInset label
 LatexCommand label
 name "others"
@@ -4022,7 +4100,7 @@ name "others"
 
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 These instructions apply to everyone.
 \end_layout
 
@@ -4030,7 +4108,7 @@ These instructions apply to everyone.
 Citations within the text
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 The 
 \family typewriter
 natbib
@@ -4042,7 +4120,7 @@ natbib
  as long as it is used consistently.
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 The documentation for 
 \family typewriter
 natbib
@@ -4054,7 +4132,7 @@ natbib
 
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 \align center
 \begin_inset Flex URL
 status collapsed
@@ -4069,7 +4147,7 @@ http://mirrors.ctan.org/macros/latex/contrib/natbib/natnotes.pdf
  
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 Of note is the command 
 \family typewriter
 
@@ -4080,7 +4158,7 @@ citet
  For example, 
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 \noindent
 \begin_inset ERT
 status open
@@ -4121,7 +4199,7 @@ end{verbatim}
 
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 \noindent
 produces 
 \end_layout
@@ -4134,7 +4212,7 @@ Hasselmo, et al.
 (1995) investigated…
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 If you wish to load the 
 \family typewriter
 natbib
@@ -4146,7 +4224,7 @@ nips_2016
  package: 
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 \noindent
 \begin_inset ERT
 status open
@@ -4185,7 +4263,7 @@ end{verbatim}
 
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 \noindent
 If 
 \family typewriter
@@ -4199,7 +4277,7 @@ nonatbib
  when loading the style file: 
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 \noindent
 \begin_inset ERT
 status open
@@ -4238,7 +4316,7 @@ end{verbatim}
 
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 \noindent
 As submission is double blind, refer to your own published work in the third
  person.
@@ -4283,7 +4361,7 @@ Anonymous.
 Footnotes
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 Footnotes should be used sparingly.
  If you do require a footnote, indicate footnotes with a number
 \begin_inset Foot
@@ -4308,7 +4386,7 @@ inches (12
 picas).
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 Note that footnotes are properly typeset 
 \emph on
 after
@@ -4330,7 +4408,7 @@ As in this example.
 Figures
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 All artwork must be neat, clean, and legible.
  Lines should be dark enough for purposes of reproduction.
  The figure number and caption always appear after the figure.
@@ -4340,7 +4418,7 @@ All artwork must be neat, clean, and legible.
  nouns); figures are numbered consecutively.
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 You may use color figures.
  However, it is best for the figure captions and the paper body to be legible
  if the paper is printed in either black/white or in color.
@@ -4416,7 +4494,7 @@ Sample figure caption.
 Tables
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 All tables must be centered, neat, clean and legible.
  The table number and title always appear before the table.
  See Table
@@ -4433,14 +4511,14 @@ reference "sample-table"
 .
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 Place one line space before the table title, one line space after the table
  title, and one line space after the table.
  The table title must be lower case (except for first word and proper nouns);
  tables are numbered consecutively.
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 Note that publication-quality tables 
 \emph on
 do not contain vertical rules.
@@ -4458,7 +4536,7 @@ booktabs
 
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 \align center
 \begin_inset Flex URL
 status collapsed
@@ -4473,7 +4551,7 @@ https://www.ctan.org/pkg/booktabs
  
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 This package was used to typeset Table
 \begin_inset space ~
 \end_inset
@@ -4488,7 +4566,7 @@ reference "sample-table"
 .
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 \begin_inset Float table
 placement t
 wide false
@@ -4694,7 +4772,7 @@ up to
 Final instructions
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 Do not change any aspects of the formatting parameters in the style files.
  In particular, do not modify the width or length of the rectangle the text
  should fit into, and do not change font sizes (except perhaps in the 
@@ -4709,7 +4787,7 @@ References
 Preparing PDF files
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 Please prepare submission files with paper size 
 \begin_inset Quotes eld
 \end_inset
@@ -4729,7 +4807,7 @@ A4.
 
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 Fonts were the main cause of problems in the past years.
  Your PDF file must only contain Type 1 or Embedded TrueType fonts.
  Here are a few instructions to achieve this.
@@ -4790,7 +4868,7 @@ http://www.emfield.org/icuwb2010/downloads/IEEE-PDF-SpecV32.pdf
 \end_layout
 
 \begin_deeper
-\begin_layout Standard
+\begin_layout Plain Layout
 The 
 \family typewriter
 
@@ -4801,7 +4879,7 @@ bbold
  You should use the equivalent AMS Fonts: 
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 \noindent
 \begin_inset ERT
 status open
@@ -4836,7 +4914,7 @@ end{verbatim}
 
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 \noindent
 followed by, e.g., 
 \family typewriter
@@ -4873,7 +4951,7 @@ mathbb{C}
  
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 \noindent
 \begin_inset ERT
 status open
@@ -4944,7 +5022,7 @@ end{verbatim}
 
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 \noindent
 Note that 
 \family typewriter
@@ -4958,7 +5036,7 @@ amssymb
 \end_layout
 
 \end_deeper
-\begin_layout Standard
+\begin_layout Plain Layout
 If your file contains type 3 fonts or non embedded TrueType fonts, we will
  ask you to fix it.
 \end_layout
@@ -4968,7 +5046,7 @@ Margins in \SpecialChar LaTeX
 
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 Most of the margin problems come from figures positioned by hand using 
 \family typewriter
 special
@@ -4987,7 +5065,7 @@ graphicx
  example below: 
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 \noindent
 \begin_inset ERT
 status open
@@ -5035,7 +5113,7 @@ end{verbatim}
 
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 \noindent
 See Section 4.4 in the graphics bundle documentation (
 \begin_inset Flex URL
@@ -5051,7 +5129,7 @@ http://mirrors.ctan.org/macros/latex/required/graphics/grfguide.pdf
 )
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 A number of width problems arise when \SpecialChar LaTeX
  cannot properly hyphenate a line.
  Please give 
@@ -5078,11 +5156,16 @@ LaTeX
 Acknowledgments
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 Use unnumbered third level headings for the acknowledgments.
  All acknowledgments go at the end of the paper.
  Do not include acknowledgments in the anonymized submission, only in the
  final paper.
+\end_layout
+
+\end_inset
+
+
 \end_layout
 
 \begin_layout Section*
