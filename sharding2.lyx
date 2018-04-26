@@ -89,7 +89,7 @@
 \begin_body
 
 \begin_layout Title
-Maxima - A Fast Fearless Secure Sharded Block-Chain
+Maxima - A Fast Fearless Sharded Block-Chain
 \end_layout
 
 \begin_layout Author
@@ -121,9 +121,9 @@ mec@Maxima.org
 \end_layout
 
 \begin_layout Abstract
-Recently, high demand and limited scalability have increased the average
- transaction times and fees in popular cryptocurrencies, yielding an unsatisfact
-ory experience.
+Recently, high demand for popular cryptocurrencies and limited scalability
+ have increased average transaction times and fees, yielding an unsatisfactory
+ user experience.
  Here we introduce Maxima a cryptocurrency with a sharded block-chain, one
  where the network is divided into partitions called shard which maintain
  their own blocks.
@@ -141,8 +141,7 @@ Validators vote on the availability of blocks to the network, and are shuffled
  Once a committee has determined if a block is accessible to nodes on a
  shard, nodes on that shard execute the transactions and verify the blocks
  validity- producing a succint fraud proof if the block is invalid.
- Cross shard transactions are managed using tools from distributed systems,
- like locks and yanks.
+ Cross shard transactions are managed using message passing.
  
 \end_layout
 
@@ -150,8 +149,6 @@ Validators vote on the availability of blocks to the network, and are shuffled
 Maxima is a globally distributed computer that is secure under an honest
  majority assumption, and puts in place mechanisms to prevent adaptive adversari
 es from corrupting the network.
- With 20 shards, Maxima is projected to process over 20,000 transactions
- per second.
  
 \end_layout
 
@@ -168,8 +165,8 @@ In Bitcoin, blocks are added to the block-chain approximately every 10 minutes,
  at a relatively fixed pace that results in a TPS of 5-7.
  Simple solutions to expanding the capacity of the block-chain have found
  natural limits to their efficacy: enlarging blocks runs up against user
- bandwidth limits; hastening the rate at which blocks are mined increases
- orphaning.
+ bandwidth limits; increasing the rate at which blocks are mined, results
+ in more block orphaning.
  
 \end_layout
 
@@ -181,7 +178,7 @@ A more promising solution to the problem of scaling is to run separate chains
  of transactions in a distributed system and (2) how to run these many separate
  block-chains in a way that does not compromise on security, since each
  shard-chain will only have a fraction of the mining/validation power of
- the network.
+ the network at large.
 \end_layout
 
 \begin_layout Standard
@@ -205,34 +202,34 @@ In this paper, we propose mechanisms to ensure the atomicity of transactions
 
 \begin_layout Standard
 With this in mind, our protocol can be described below.
- Validator committees are sampled for each shard.
- Sampling validators randomly means that with a sufficient number (400)
- we can ensure an honest majority of 2/3 of per shard almost surely.
+ Validator vote on the availability of blocks to the network, and are maintained
+ as a global set across shards.
+ There exists a main chain, which is used to maintain randomness and keep
+ track of validator balances.
  
 \end_layout
 
 \begin_layout Standard
-Validators then vote on the availability of blocks to the network, and are
- shuffled off shards very quickly.
- This fast shuffling is to ensure that an adaptive adversary does not have
- the time to find and corrupt the validators of each shard.
- Because of this fast shuffling, the work that a validator can perform must
- be very minimal.
+Each shard also maintains its own random number per block.
+ This random number is used to create dynamic pand private validator sets,
+ as is the case in Algorand.
  Validators check that the data corresponding to the Merkle root of a block
  is accessible to a shard, so that the members of a shard can execute those
  transactions.
- If there is a dispute about transaction execution, validators also resolve
- disputes by considering succinct proofs of invalid execution.
- Cross shard transactions are managed using tools from distributed systems,
- like yanks, to ensure that transactions can be executed atomically.
+ If there is a dispute about transaction execution, validators resolve disputes
+ by considering succinct proofs of execution.
+ Cross shard transactions are managed using message passing queues, in a
+ system that is not disimilar from Erlang mailboxes.
  
 \end_layout
 
 \begin_layout Standard
-
-\series bold
-Our key ambitions are to reduce costs and improve scalability - this will
- be a constant theme throughout this work.
+The aim of creating Maxima is to reduce transaction costs on the block-chain,
+ increase the speed at which transactions are processed, and to also reduce
+ the storage burden imposed on nodes.
+ We will also adopt a UTXO paradigm, which ensures that smart contracts
+ may be checked far more effectively, since the validity of a transaction
+ does not depend on state that is extrinsic to the smart-contract.
  
 \end_layout
 
@@ -242,322 +239,390 @@ Protocol Structure
 
 \begin_layout Standard
 The construction of our protocol depends on the following, relatively independen
-t components, which can be subdivided into three themes: voting schemes;
- data creation and concurrency controls.
-\end_layout
-
-\begin_layout Enumerate
-
-\series bold
-Motivation and Outline - Sharding
-\series default
+t components, which can be subdivided into three themes: consensus mechanisms,
+ concurrency controls, the UTXO model and data availability proofs.
+ Later on we discuss the future of languages, including virtual machines
+ and EWASM.
  
 \end_layout
 
+\begin_layout Standard
+
+\series bold
+Simple Sharding 
+\end_layout
+
+\begin_layout Itemize
+Consensus
+\end_layout
+
 \begin_deeper
-\begin_layout Enumerate
-Protocol Structure
+\begin_layout Itemize
+An History of Consensusm Mechanisms
+\end_layout
+
+\begin_layout Itemize
+Algorand with Incentives
 \end_layout
 
 \end_deeper
-\begin_layout Enumerate
-Consensus:
-\end_layout
-
-\begin_deeper
-\begin_layout Enumerate
-Voting Scheme
-\end_layout
-
-\begin_layout Enumerate
-Validator registration and Shuffling
-\end_layout
-
-\end_deeper
-\begin_layout Enumerate
+\begin_layout Itemize
 Concurrency Controls
 \end_layout
 
 \begin_deeper
-\begin_layout Enumerate
-Locking State for Cross Shard Transactions
-\end_layout
-
-\begin_layout Enumerate
-Stateless Clients
+\begin_layout Itemize
+Cross Shard Communication
 \end_layout
 
 \end_deeper
-\begin_layout Enumerate
+\begin_layout Itemize
+UTXO Model
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+An Overview of Sharding with UTXOs
+\end_layout
+
+\begin_layout Itemize
+Smart Contract Verification
+\end_layout
+
+\begin_layout Itemize
+Affinities with IPFS
+\end_layout
+
+\end_deeper
+\begin_layout Itemize
 Minimal Sharding - No Smart Contracts
 \end_layout
 
 \begin_deeper
-\begin_layout Enumerate
-Summary - a simple protocol to transfer currency.
+\begin_layout Itemize
+Summary - A Simple Protocol to Transfer Currency.
 \end_layout
 
 \end_deeper
-\begin_layout Enumerate
+\begin_layout Standard
 
 \series bold
-Motivation and Outline - Advanced Sharding 
+Advanced Sharding 
 \end_layout
 
-\begin_layout Enumerate
+\begin_layout Itemize
 Separating Validity Checking from Availability Checking
 \end_layout
 
 \begin_deeper
-\begin_layout Enumerate
+\begin_layout Itemize
 Erasure Coding
 \end_layout
 
-\begin_layout Enumerate
+\begin_layout Itemize
 Fraud Proofs
 \end_layout
 
-\begin_layout Enumerate
-Summary
-\end_layout
-
 \end_deeper
-\begin_layout Enumerate
-Solving the State Problem 
+\begin_layout Itemize
+Virtual Machines
 \end_layout
 
 \begin_deeper
-\begin_layout Enumerate
-
-\series bold
-Introducing rental fees to the block-chain 
-\end_layout
-
-\begin_layout Enumerate
-
-\series bold
-Building on top of IPFS
-\end_layout
-
-\end_deeper
-\begin_layout Enumerate
-Virtual Machine 
-\end_layout
-
-\begin_deeper
-\begin_layout Enumerate
+\begin_layout Itemize
 EWASM VM
 \end_layout
 
-\begin_layout Enumerate
-Transpilers and the future of block-chain
+\begin_layout Itemize
+Transpilers and the Future of Block-Chain
 \end_layout
 
 \end_deeper
+\begin_layout Part
+Simple Sharding 
+\end_layout
+
 \begin_layout Section
-Achieving Fork-Free Consensus
-\end_layout
-
-\begin_layout Subsection
-Consensus Scheme - Modified Dfinity
+An History of Consensusm Mechanisms
 \end_layout
 
 \begin_layout Standard
-One critique of proof of stake are that the economies of scale eventually
- lead to a few centralised stakers.
- This led to the adoption of delegated proof of stake.
- But with centralisation there is a good chance an actor can be bribed.
- More recently, consensus models have emerged that randomly sample participants
- from a global pool.
- Both Dfinity and Zilliqa have byzantine fault tolerant like algorithms
- that have O(n) communication complexity, enabling the scaling of ths algorithm
- to the order of 400 nodes.
-\end_layout
-
-\begin_layout Standard
-
+In Maxima, we adopt proof of stake.
+ Here, we give a brief overview of proof of stake schemes, motivating our
+ choice of protocol.
+ In traditional proof of stake protocols, validators place bets (stake)
+ on whether a given block will be included in the main chain.
+ One argument against traditional proof of stake is that it can eventually
+ lead to a system dominated by a few central stakers, due to the agglomoration
+ of capital by those with more influence and power
 \series bold
-Weighing up the benefits and disadvantages of our approach
-\end_layout
-
-\begin_layout Standard
-There may be criticisms in that marginal incentives are not properly aligned
- in these schemes, compared with slashing proof of stake schemes like casper.
- However, as both rely on an honest majority assumption we deem them both
- as safe as each other.
- Slashing may also be introduced probabilistically to the Dfinity scheme
- as we will later show.
- Though we could also adopt the Zilliqa consensus algorithm, we adopt the
- Dfinity model for the simplicity of its algorithm which we outline here.
+.
+ 
+\series default
+Aknowledging that issue, delegated proof of stake protocols emerged, as
+ used in EOS and NEO, where nodes are chosen to stake on blocks on behalf
+ of others.
+ Although this results in a simpler and faster algorithm, this has the undesirab
+le effect that participation in delegated proof of stake is centralised.
  
 \end_layout
 
 \begin_layout Standard
-
-\series bold
-Algorithm in depth
-\end_layout
-
-\begin_layout Standard
-In Dfinity, the network is grouped into threshold relay groups.
- These groups are created through random sampling and have a size of about
- 400.
- A random number is generated which selects the first relay group.
- These relay groups then sign on the random number to produce another random
- number and select the next relay group.
- The random number also selects a number of block proposers, and the blocks
- if valid may be signed by the current threshold relay group.
- This algorithm (with block proposers) and notaries who sign on blocks have
- similarities with PBFT schemes.
- Whereas PBFT commits only one block and forges consensus after a round
- fo prepare and commits, the Dfinity scheme may commit more than one block.
- Dfinity achieves its high speed and short block times exactly because notarizat
-ion is not full consensus.
- However, notarization can be seen as optimistic consensus because it will
- frequently be the case that only one block gets notarized.
- Hence, whenever the broadcast network functions normally a transaction
- is final in the Dfinity consensus after two notarized confirmations plus
- a network traversal time.
- The notarization step makes it impossible for the adversary to build and
- sustain a chain of linked, notarized blocks in secret.
- For this reason, Dfinity does not suffer from the selfish mining attack
- [4] or the nothing-at-stake problem.
-\end_layout
-
-\begin_layout Standard
-
-\series bold
-Advantages
-\end_layout
-
-\begin_layout Standard
-Fork-free protocols typically use BFT style algorithms.
- These are systems where a vote for a block consists of a prepare followed
- by a commit.
- They are fork-free, which is essential for cross-shard communication.
- Traditionally, PBFT couldn't scale to the size of a network.
- So instead, we: 
-\end_layout
-
-\begin_layout Standard
-Subsample from the entire population so many validators are voting but not
- all (in Zilliqa, they use X).
- If say 400 participants are voting and we assume that f<25% are byzantine.
- We can show that the probability more than 2/3 of those voting are also
- byzantine is less than the number of atoms in the universe.
- 
-\end_layout
-
-\begin_layout Standard
-
-\series bold
-What are nodes voting on?
-\end_layout
-
-\begin_layout Standard
-However, a key question here is: what precisely are the nodes voting on?
- A simple scheme would be for nodes to run the transactions in a block and
- verify that they are valid.
- If more than half the nodes agree that a block is valid it is finalised
- during notarisation.
- However, this presents problems in the context of sharding: the validators
- do not have the storage capacity or bandwidth to maintain the state of
- all shards, and yet they must be shuffled quickly between shards.
- One solution to this problem is to store the witness data with the transaction
- in a block, entailing that a block is 
-\begin_inset Quotes eld
+More recently, consensus protocols have emerged where a randomly selected
+ group of bonded validators are chosen from a global pool [Algorand, Dfinity
+ , Zilliqa].
+ These algorithms are more open and secure than delegated proof of stake
+ protocols as participants are randomly sampled from an open set.
+ Yet they also offer fast finality through aggregating the votes of large
+ consensus groups (of the order 400) who vote on each block.
+ The protocols proposed by these algorithms are inspired by the byzantine
+ fault tolerant literature; prior to Bitcoin BFT protocols had been bottlenecked
+ by large communication complexity 
+\begin_inset Formula $O(n^{2})$
 \end_inset
 
-self-authenticating
-\begin_inset Quotes erd
+ in the number of nodes, implying that consensus groups would be practically
+ limited in size to about 50 nodes .
+ Zilliqa and Dfinity reduce the communication complexity to 
+\begin_inset Formula $O(n)$
 \end_inset
 
-, and the witness data need not be downloaded.
+ by using threshold signatures and Schnorr signatures with multicast messages
+ to aggregate votes efficiently.
+ Reducing the communication complexity of traditional BFT algorithms has
+ enabled the formation of large, robust and open consensus groups formed
+ through random sampling.
+\end_layout
+
+\begin_layout Standard
+However, these Byzantine fault tolerant algorithms have their own limitations.
+ In Zilliqa, there is a single leader orchestrating the vote, who can be
+ corrupted to stall progress by proposing faulty blocks or by aggregating
+ votes incorrectly.
+ Dfinity is leaderless, a strong advantage, but has the disadvantages that
+ (1): notary groups (the stakers) cannot be slashed for behaviour like going
+ offline or voting for an incorrect blocks.
+ Furthermore, both cryptocurrencies have not solved the issue that consensus
+ groups can be subjected to denial of service attacks (DOS), and so liveness
+ may be affected.
+ A further issue in Dfinity is that the signing committee is public and
+ so can be targeted by an adversary ahead of time.
  
 \end_layout
 
 \begin_layout Standard
-Another solution is for validators to just check that data is available,
- rather than the correctness of a block.
- If a block is unavailable some honest actor in the network may respond
- with a fraud proof and take the faulty block creator's deposit.
- Ultimately, we offload the actual checking of whether a block is correct
- or not to the network.
- Just checking data availability has a second advantage: the committee can
- share the workload of the task.
- Below we give an outline of how this may be made possible:
-\end_layout
-
-\begin_layout Standard
-Blocks are expanded with an erasure code to a size of 400, say.
- The erasure code is a redundant encoding scheme which ensures that if 1/6
- of the code is available, the original block can be reconstructed by honest
- nodes within the network.
- Then each of the 400 committee members checks for 3 or 4 pieces of data.
- By the probabilistic sampling, we can ensure that 2/3 of the committee
- is honest.
- We also require a threshold signature of 1/2 for a block to be notarised
- for its validitiy.
- 
-\end_layout
-
-\begin_layout Standard
-If a block is available, then 2/3 of the committee will vote and so we have
- no issues.
- 
-\end_layout
-
-\begin_layout Standard
-If a block is unavailable, then fewer than 1/6 of honest members can have
- pieces of data.
- And so even with these votes, and 1/3 of the dishonest majority, they cannot
- reach the 50% threshold required.
- We devote a further section to data availability proofs.
- 
-\end_layout
-
-\begin_layout Standard
-
-\series bold
-Slashing Conditions
-\end_layout
-
-\begin_layout Standard
-For all those who voted that a block is available, we require a random section
- of the group to reveal the data that they got from the network.
- This will disincentivise some from creating a block.
- Creating a slashing condition going the other way is more tricky, since
- we don't know if a block is unavailable or a a validator is just witholding
- data.
- However, liveness is a less serious issue, since the beacon group can always
- be changed.
- 
-\end_layout
-
-\begin_layout Standard
-
-\series bold
-Fall-back Mechanism
-\end_layout
-
-\begin_layout Standard
-One pertinent question is what should happen if a Beacon group is corrupted?
- We use fast shuffling of validators to ensure that this is near impossible.
+A more robust consensus protocol is outlined by Micali in Algorand.
+ In Algorand, committees are formed on the fly after a block has been created.
+ Membership of the committee is based on owning a private ephemeral key
+ which is not broadcast until the committee members vote is cast.
+ This privacy prevents the DOS attack vectors which might stall either Dfinity
+ or Zilliqa.
+ One disadvantage of Algorand is that there is no way to slash a validator
+ who has gone offline and reneged on the duty to validate blocks, which
+ may affect liveness.
+ In Maxima, we resolve such a disadvantage by augmenting Algorand with incentive
+ schemes to ensure liveness.
  
 \end_layout
 
 \begin_layout Subsection
-Consensus Scheme - Validator Registration and Shuffling
+Algorand with Incentives
 \end_layout
 
 \begin_layout Standard
-Here , we just say a little more about the actual mechanisms and concrete
- data structures underpinning the validator sampling.
- Validators have their own shard, which they register a deposit to.
- This deposit is a non-trivial sum.
- 
+
 \series bold
-TODO - copy from DFINITY
+Randomness
+\end_layout
+
+\begin_layout Standard
+Suppose we have a block 
+\begin_inset Formula $BLOCK_{n}$
+\end_inset
+
+ and a source of randomness 
+\begin_inset Formula $RAND_{n}$
+\end_inset
+
+ in round 
+\begin_inset Formula $n$
+\end_inset
+
+.
+ We will show how a new source of randomness is generated for round 
+\begin_inset Formula $n+1$
+\end_inset
+
+.
+ For a valid block to be considered valid, it must include the .
+ Before any round begins, the block proposer commits to 
+\begin_inset Formula $hash^{1024}[x]$
+\end_inset
+
+ 
+\end_layout
+
+\begin_layout Standard
+
+\series bold
+Formation of Committees
+\end_layout
+
+\begin_layout Standard
+Each Block proposer 
+\begin_inset Formula $P$
+\end_inset
+
+ has a private pre-image of a committed value 
+\begin_inset Formula $C_{P}$
+\end_inset
+
+, and there is a common source of randomness R, which is derived from the
+ main chain.
+ For any given block 
+\begin_inset Formula $B_{P}$
+\end_inset
+
+, we create a randomness source 
+\begin_inset Formula $RAND[B_{P}]=Hash[R,C_{P}]$
+\end_inset
+
+ from the proposers private pre-image.
+ 
+\end_layout
+
+\begin_layout Standard
+The committee ratifying the block is created dynamically from 
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+
+\begin_inset Formula $RAND[B_{P}]$
+\end_inset
+
+
+\family default
+\series default
+\shape default
+\size default
+\emph default
+\bar default
+\strikeout default
+\uuline default
+\uwave default
+\noun default
+\color inherit
+.
+ If there are in total 
+\begin_inset Formula $N$
+\end_inset
+
+ ratifiers and committees are of size 
+\begin_inset Formula $M$
+\end_inset
+
+, then any ratifier i can make a signature by revealing 
+\begin_inset Formula $C_{i}$
+\end_inset
+
+ and showing that 
+\begin_inset Formula $C_{i}≤256∗\frac{M}{N}$
+\end_inset
+
+ .
+ On average, M of the N ratifiers will be able to do so for any given proposal,
+ with standard deviation 
+\begin_inset Formula $\sqrt{M}$
+\end_inset
+
+.
+ And so, the committee formed is bounded between 
+\begin_inset Formula $M-3\sqrt{M}$
+\end_inset
+
+and 
+\begin_inset Formula $M+3\sqrt{M}$
+\end_inset
+
+ with probability 99.85%.
+\end_layout
+
+\begin_layout Standard
+We take a committee to be of sise 200, and an attacker has a fraction 
+\begin_inset Formula $p$
+\end_inset
+
+ of proposers.
+ We can demonstrate that the probability a fraudulent proposal will get
+ through (using Poisson distributions, which assume that N approaches infinity,
+ values for N = 20000 are very close to the limit at 
+\begin_inset Formula $N\rightarrow\infty$
+\end_inset
+
+).
+ 
+\end_layout
+
+\begin_layout Standard
+In addition, it would be nice for shards to be acnhored to a common round
+ value.
+ Then blocks may only be added as quickly as the common reference block.
+ This could be done in a sequential proof of work scheme, with a difficulty
+ factor D, where D is adjusted via an on-chain game, targeting toward five
+ seconds.
+\end_layout
+
+\begin_layout Standard
+
+\series bold
+Leadership election
+\end_layout
+
+\begin_layout Standard
+Leadership election would be done in a similar way, where we derive a randomness
+ 
+\begin_inset Formula $RP=Hash[R,CP]$
+\end_inset
+
+ , where CP is the proposer’s preimage.
+ 
+\end_layout
+
+\begin_layout Standard
+
+\series bold
+Safety
+\end_layout
+
+\begin_layout Standard
+The key safety properties are proved in section 55 of Algorand.
+ We will add more details here.
+ 
+\end_layout
+
+\begin_layout Standard
+
+\series bold
+Adding Incentives to Algorand
+\end_layout
+
+\begin_layout Standard
+Incentivising liveness is relatively simple.
+ We can award validation points to validators who attest to the validity
+ or invalidity of blocks.
+ We also passively drain a validators deposit ach round, which provides
+ a second incentive for validators to stay online and check blocks.
+ In a later section, we will discuss how we adapt the incentive scheme for
+ advanced sharding.
+ 
 \end_layout
 
 \begin_layout Standard
@@ -1489,6 +1554,428 @@ Actor bundles
 \end_layout
 
 \begin_layout Section
+UTXO model
+\end_layout
+
+\begin_layout Standard
+Transaction ordering is a problem.
+ The miners get to decide on the order of the transactions and this can
+ have surprising consequences.
+\end_layout
+
+\begin_layout Standard
+Also, how does one merge large blocks together.
+ 
+\end_layout
+
+\begin_layout Standard
+In contrast a UTXO model has no such issues.
+ the state consists of a set of objects.
+ We use a slightly different mechanism, which has the same ethos as the
+ UTXO model.
+ 
+\end_layout
+
+\begin_layout Standard
+This is the hashgraph.
+ Objects are re
+\end_layout
+
+\begin_layout Itemize
+Objects are atoms that hold state in the Chainspace system.
+ We usually refer to an object through the letter o, and a set of objects
+ as o 
+\begin_inset Formula $\in$
+\end_inset
+
+ O.
+ All objects have a cryptographically derived unique identifier used to
+ unambiguously refer to the object, that we denote id(o).
+ Objects also have a type, denoted as type(o), that determines the unique
+ identifier of the smart contract that defines them, and a type name.
+ In Chainspace object state is immutable.
+ Objects may be in two meta-states, either active or inactive.
+ Active objects are available to be operated on through smart contract procedure
+s, while inactive ones are retained for the purposes of audit only.
+\end_layout
+
+\begin_layout Itemize
+Contracts are special types of objects, that contain executable information
+ on how other objects of types defined by the contract may be manipulated.
+ They define a set of initial objects that are created when the contract
+ is first created within Chainspace.
+ A contract c defines a namespace within which types (denoted as types(c))
+ and a checker v for procedures (denoted as proc(c)) are defined
+\end_layout
+
+\begin_layout Itemize
+A procedure, p, defines the logic by which a number of objects, that may
+ be inputs or references, are processed by some logic and local parameters
+ and local return values (denoted as lpar and lret), to generate a number
+ of object outputs.
+ Notionally, input objects, denoted as a vector ~w, represent state that
+ is invalidated by the procedure; references, denoted as ~r represent state
+ that is only read; and outputs are objects, or ~x are created by the procedure
+\end_layout
+
+\begin_layout Itemize
+We denote the execution of such a procedure as: 
+\begin_inset Note Note
+status collapsed
+
+\begin_layout Plain Layout
+c.p( ~w, ~r, lpar,spar) 
+\begin_inset Formula $\rightarrow$
+\end_inset
+
+ ~x, lret,sret
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Itemize
+\begin_inset Note Note
+status open
+
+\begin_layout Itemize
+for ~w, ~r, ~x 
+\begin_inset Formula $\in$
+\end_inset
+
+ O and p 
+\begin_inset Formula $\in$
+\end_inset
+
+ proc(c).
+ We restrict the type of all objects (inputs ~w, outputs ~x and references
+ ~r) to have types defined by the same contract c as the procedure p (formally:
+ 
+\begin_inset Note Note
+status open
+
+\begin_layout Plain Layout
+∀o ∈ ~w∪~x∪~r.type(o) ∈ types(c)
+\end_layout
+
+\end_inset
+
+).
+ However, public locals (both lpar and lret) may refer to objects that are
+ from different contracts through their identifiers.
+ We further require a procedure that outputs an non empty set of objects
+ ~x, to also take as parameters a non-empty set of input objects ~w
+\end_layout
+
+\begin_layout Itemize
+Associated with each smart contract c, we define a checker denoted as v.
+ Those checkers are pure functions (ie.
+ deterministic, and have no side-effects), and return a Boolean value.
+ A checker v is defined by a contract, and takes as parameters a procedure
+ p, as well as inputs, outputs, references and locals.
+ c.v(p, ~w, ~r, lpar, ~x, lret, dep) → {true, false} (2) Note that checkers
+ do not take any secret local parameters (spar or sret).
+ A checker for a smart contract returns true only if there exist some secret
+ parameters spar or sret, such that an execution of the contract procedure
+ p, with the parameters passed to the checker alongside spar or sret, is
+ possible as defined in Equation (1).
+ The variable dep represent the context in which the procedure is called:
+ namely information about other procedure executions.
+ This supports composition, as we discuss in detail in the next section
+\end_layout
+
+\begin_layout Itemize
+Transactions represent the atomic application of one or more valid procedures
+ to active input objects, and possibly some referenced objects, to create
+ a number of new active output objects.
+ The design of Chainspace is user-centric, in that a user client executes
+ all the computations necessary to determine the outputs of one or more
+ procedures forming a transaction, and provides enough evidence to the system
+ to check the validity of the execution and the new objects.
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Itemize
+A key design goal is to achieve scalability in terms of high transaction
+ throughput and low latency.
+ To this end, nodes are organized into shards that manage the state of objects,
+ keep track of their validity, and record transactions aborted or committed.
+ Within each shard all honest nodes ensure they consistently agree whether
+ to accept or reject a transaction: whether an object is active or inactive
+ at any point, and whether traces from contracts they know check
+\end_layout
+
+\begin_layout Itemize
+Consensus on committing (or aborting) transactions takes place in parallel
+ across different shards.
+ For transparency and auditability, nodes in each shard periodically publish
+ a signed hash chain of checkpoints: shards add a block (Merkle tree) of
+ evidence including transactions processed in the current epoch, and signed
+ promises from other nodes, to the hash chain.
+\end_layout
+
+\begin_layout Itemize
+
+\series bold
+Transparency
+\series default
+.
+ Chainspace ensures that anyone in possession of the identity of a valid
+ object may authenticate the full history of transactions and objects that
+ led to the creation of the object.
+ No transactions may be inserted, modified or deleted from that causal chain
+ or tree.
+ Objects may be used to self-authenticate its full history—this holds under
+ both the HS and DS threat models.
+ • Integrity.
+ Subject to the HS threat model, when one or more transactions are submitted
+ only a set of valid non-conflicting transactions will be executed within
+ the system.
+ This includes resolving conflicts—in terms of multiple transactions using
+ the same objects— ensuring the validity of the transactions, and also making
+ sure that all new objects are registered as active.
+ Ultimately, Chainspace transactions are accepted, and the set of active
+ objects changes, as if executed sequentially—however, unlike other systems
+ such as Ethereum [Woo14], this is merely an abstraction and high levels
+ of concurrency are supported.
+ • Encapsulation.
+ The smart contract checking system of Chainspace enforces strict isolation
+ between smart contracts and their state—thus prohibiting one smart contract
+ from directly interfering with objects from other contracts.
+ Under both the HS and DS threat models.
+ However, cross-contract calls are supported but mediated by well defined
+ interfaces providing encapsulation.
+ • Non-repudiation.
+ In case conflicting or otherwise invalid transactions were to be accepted
+ in honest shards (in the case of the DS threat model), then evidence exists
+ to pinpoint the parties or shards in the system that allowed the inconsistency
+ to occur.
+ Thus, failures outside the HS threat model, are detectable; the guildy
+ parties may be banned; and appropriate off-line recovery mechanisms could
+ be deployed
+\end_layout
+
+\begin_layout Itemize
+Smart Contract developers in Chainspace register a smart contract c into
+ the distributed system managing Chainspace, by defining a checker for the
+ contract and some initial objects.
+ Users may then submit transactions to operate on those objects in ways
+ allowed by the checkers.
+ 
+\end_layout
+
+\begin_layout Itemize
+Transactions are atomic: either all their procedures run, and produce outputs,
+ or none of them do.
+ Transactions are also consistent: in case two transactions are submitted
+ to the system using the same active object inputs, at most one of them
+ will eventually be executed to produce outputs.
+ Other transactions, called conflicting, will be aborted.
+\end_layout
+
+\begin_layout Itemize
+To generate a set of traces composing the transaction, a user executes on
+ the client side all the smart contract procedures required on the input
+ objects, references and local parameters, and generates the output objects
+ and local returns for every procedure—potentially also using secret parameters
+ and returns.
+ Thus the actual computation behind the transactions is performed by the
+ user, and the traces forming the transaction already contain the output
+ objects and return parameters, and sufficient information to check their
+ validity through smart contract checkers.
+ This design pattern is related to traditional optimistic concurrency control
+\end_layout
+
+\begin_layout Itemize
+Smart contract composition.
+ A contract procedure may call a transaction of another smart contract,
+ with specific parameters and rely upon returned values.
+ This is achieved through passing the dep variable to a smart contract checker,
+ a validated list of traces of all the sub-calls performed.
+ The checker can ensure that the parameters and return values are as expected,
+ and those dependencies are checked for validity by Chainspace.
+ Composition of smart contracts is a key feature of a transparent and auditable
+ computation platform.
+ It allows the creation of a library of smart contracts that act as utilities
+ for other higher-level contracts: for example, a simple contract can implement
+ a cryptographic currency, and other contracts— for e-commerce for example—can
+ use this currency as part of their logic.
+ Furthermore, we compose smart contracts, in order to build some of the
+ functionality of Chainspace itself as a set of ‘system’ smart contracts,
+ including management of shards mapping to nodes, key management of shard
+ nodes, and governance.
+ Chainspace also supports the atomic batch execution of multiple procedures
+ for efficiency, that are not dependent on each other
+\end_layout
+
+\begin_layout Itemize
+Privacy by design.
+ Defining smart contract logic as checkers allows Chainspace to support
+ privacy friendly-contracts by design.
+ In such contracts some information in objects is not in the clear, but
+ instead either encrypted using a public key, 4 or committed using a secure
+ commitment scheme as [P +91].
+ The transaction only contains a valid proof that the logic or invariants
+ of the smart contract procedure were applied correctly or hold respectively,
+ and can take the form of a zero-knowledge proof, or a Succinct Argument
+ of Knowledge (SNARK).
+ Then, generalizing the approach of [MGGR13], the checker runs the verifier
+ part of the proof or SNARK that validates the invariants of the transactions,
+ without revealing the secrets within the objects to the verifiers.
+\end_layout
+
+\begin_layout Itemize
+
+\series bold
+Reads
+\series default
+.
+ Besides executing transactions, Chainspace clients, need to read the state
+ of objects, if anything, to correctly form transactions.
+ Reads, by themselves, cannot lead to inconsistent state being accepted
+ into the system, even if they are used as inputs or references to transactions.
+ This is a result of the system checking the validity rules before accepting
+ a transaction, which will reject any stale state.
+\end_layout
+
+\begin_layout Subsection*
+Data Structures
+\end_layout
+
+\begin_layout Itemize
+Hash-DAG structure.
+ Objects and transactions naturally form a directed acyclic graph (DAG):
+ given an initial state of active objects a number of transactions render
+ their inputs invalid, and create a new set of outputs as active objects.
+ These may be represented as a directed graph between objects, transactions
+ and new objects and so on.
+ Each object may only be created by a single transaction trace, thus cycles
+ between future transactions and previous objects never occur.
+ We prove that output object identifiers resulting from valid transactions
+ are fresh (see Security Theorem 1).
+ Hence, the graph of objects inputs, transactions and objects outputs form
+ a DAG, that may be indexed by their identifiers.
+\end_layout
+
+\begin_layout Itemize
+
+\series bold
+Specifically, we define a function id(Trace) as the identifier of a trace
+ contained in transaction T.
+ The identifier of a trace is a cryptographic hash function over the name
+ of contract and the procedure producing the trace; as well as serialization
+ of the input object identifiers, the reference object identifiers, and
+ all local state of the transaction (but not the secret state of the procedures)
+; the identifiers of the trace’s dependencies are also included.
+ Thus all information contributing to defining the Trace is included in
+ the identifier, except the output object identifiers.
+\end_layout
+
+\begin_layout Itemize
+We also define the id(o) as the identifier of an object o.
+ We derive this identifier through the application of a cryptographic hash
+ function, to the identifier of the trace that created the object o, as
+ well as a unique name assigned by the procedures creating the trace, to
+ this output object.
+ (Unique in the context of the outputs of this procedure call, not globally,
+ such as a local counter.)
+\end_layout
+
+\begin_layout Itemize
+An object identifier id(o) is a high-integrity handle that may be used to
+ authenticate the full history that led to the existence of the object o.
+ Due to the collision resistance properties of secure cryptographic hash
+ functions an adversary is not able to forge a past set of objects or transactio
+ns that leads to an object with the same identifier.
+ Thus, given id(o) anyone can verify the authenticity of a trace that led
+ to the existence of o.
+ A very important property of object identifiers is that future transactions
+ cannot re-create an object that has already become inactive.
+ Thus checking object validity only requires maintaining a list of active
+ objects, and not a list of past inactive objects.
+ 
+\end_layout
+
+\begin_layout Itemize
+Why we use a HASH-DAG - it is the default for storing stuff.
+ 
+\end_layout
+
+\begin_layout Itemize
+
+\series bold
+\begin_inset Note Note
+status open
+
+\begin_layout Itemize
+
+\series bold
+We could use log shards to store the inactive set of objects? Implicitly
+ maintain a frontier set of active objects???
+\end_layout
+
+\begin_layout Itemize
+Only valid transactions are eventually committed into the Chainspace system,
+ as specified by two validity rules sequencing and checking presented in
+ Figure 2.
+ Transactions are considered valid within a context of a set of active objects
+ maintained by Chainspace, denoted with α.
+ Valid transactions lead to a new context of active objects (eg.
+ α 0 ).
+ We denote this through the triplet (α, Valid(T), α0 ), which is true if
+ the execution of transaction T is valid within the context of active objects
+ α and generates a new context of active objects α 0 .
+ The two rules are as follows: • (Sequence rule).
+ A ‘Trace list’ (within a ‘Transaction’ or list of dependencies) is valid
+ if each of the traces are valid in sequence (see Figure 2 rule for sequencing).
+ Further, the active objects set is updated in sequence before considering
+ the validity of each trace.
+ • (Check rule).
+ A particular ‘Trace’ is valid, if the sequence of its dependencies are
+ valid, and then in the resulting active object context, the checker for
+ it returns true.
+ A further three side conditions must hold: (1) inputs and references must
+ be active; (2) if the trace produces any output objects it must also contain
+ some input objects; and (3) all objects passed to the checker must be of
+ types defined by the smart contract of this checker (see Figure 2 rule
+ for checking).
+ The ordering of active object sets in the validation rules result in a
+ depth-first validation of all traces, which represents a depth-first execution
+ and data flow dependency between them.
+ It is also noteworthy that only the active set of objects needs to be tracked
+ to determine the validity of new transactions, which is in the order of
+ magnitude of active objects in the system.
+ T
+\end_layout
+
+\begin_layout Itemize
+type Transaction : Trace list type Trace : Record { c : id(o), p : string,
+ ~w, ~r, ~x : id(o) list, lpar, lret : arbitrary data, dep : Trace list}
+\end_layout
+
+\begin_layout Itemize
+.
+ Transactions are considered valid within a context of a set of active objects
+ maintained by Chainspace, denoted with α.
+ Valid transactions lead to a new context of active objects (eg.
+ α 0 ).
+ We denote this through the triplet (α, Valid(T), α0 ), which is true if
+ the execution of transaction T is valid within the context of active objects
+ α and generates a new context of active objects α 0 .
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Section
 Minimal Sharding - No Smart Contracts
 \end_layout
 
@@ -1571,6 +2058,218 @@ Apart from sharding, one idea to improve storage is to move to a model where
 
 \begin_layout Section
 Separating Validity checking from State Execution
+\end_layout
+
+\begin_layout Standard
+In the advanced sharding section, we propose a second variant of Maxima,
+ which utilises data availability proofs.
+ Under such a scheme validators vote on the availability of a block to the
+ network at large.
+ The actual correctness of execution is left to the network itself, in a
+ similar manner to Truebit style interactive games.
+ This has the advantage that:
+\end_layout
+
+\begin_layout Enumerate
+Validators do not need to store all the witness data required to execute
+ transactions, which is ideal as we imagine them moving between shards rapidly.
+ 
+\end_layout
+
+\begin_layout Enumerate
+We can request for proofs that validators have checked the availability
+ of a transaction.
+ 
+\end_layout
+
+\begin_layout Standard
+Under such a scheme: a proof that they have checked a block, together with
+ a sequential proof of work on that block, for which they voted yes to the
+ availability of.
+ This serves to purposes (1): offline validators will not be able to respond
+ to the challenge and so will be slashed.
+ (2): validators will have to demonstrate that they have checked the availabilit
+y of a transaction, which can only be just in time.
+ 
+\end_layout
+
+\begin_layout Standard
+
+\series bold
+Weighing up the benefits and disadvantages of our approach
+\end_layout
+
+\begin_layout Standard
+There may be criticisms in that marginal incentives are not properly aligned
+ in these schemes, compared with slashing proof of stake schemes like casper.
+ However, as both rely on an honest majority assumption we deem them both
+ as safe as each other.
+ Slashing may also be introduced probabilistically to the Dfinity scheme
+ as we will later show, to introduce the correct marginal incentives.
+ It is important to note that: we ultimately make 2 assumptions which safe-guard
+ the security.
+ 
+\end_layout
+
+\begin_layout Standard
+We try and make realistic security assumptions rather than theoretical mathemati
+cal guarantees:
+\end_layout
+
+\begin_layout Standard
+(2) 
+\series bold
+Rational Miner 
+\series default
+- We assume a large mining pool which controls some 5% of the stake, may
+ introduce its own software on top of our protocol to increase its profit
+ - however they will not intentionally do so to destroy their steak and
+ the system as a whole unless bribed by an amount proportional to their
+ stake.
+ Only once was the Bitcoin consensus reverted, through a mining pool mining
+ on invalid blocks, which introduced a bug in its software.
+ We are not immune to majority attacks - and would use a social consensus
+ mechanism to fork the coin if ever presented with a catastrophic failure,
+ similar to .
+ 
+\end_layout
+
+\begin_layout Standard
+(3) 
+\series bold
+Bribing attacker
+\series default
+ - We build in mechanisms that an attacker would need to revert consensus
+ on each shard.
+ Bribing before the event - they'd need a budget of at least 25%.
+ Bribing after a shard has been formed.
+ We assume that due to the speed with which blocks are agreed upon, roughly
+ 1 minutes, this becomes infeasible.
+ 
+\end_layout
+
+\begin_layout Standard
+
+\series bold
+Algorithm in depth
+\end_layout
+
+\begin_layout Standard
+In Dfinity, the network is grouped into threshold relay groups.
+ These groups are created through random sampling and have a size of about
+ 400.
+ A random number is generated which selects the first relay group.
+ These relay groups then sign on the random number to produce another random
+ number and select the next relay group.
+ The random number also selects a number of block proposers, and the blocks
+ if valid may be signed by the current threshold relay group.
+ This algorithm (with block proposers) and notaries who sign on blocks have
+ similarities with PBFT schemes.
+ Whereas PBFT commits only one block and forges consensus after a round
+ fo prepare and commits, the Dfinity scheme may commit more than one block.
+ Dfinity achieves its high speed and short block times exactly because notarizat
+ion is not full consensus.
+ However, notarization can be seen as optimistic consensus because it will
+ frequently be the case that only one block gets notarized.
+ Hence, whenever the broadcast network functions normally a transaction
+ is final in the Dfinity consensus after two notarized confirmations plus
+ a network traversal time.
+ The notarization step makes it impossible for the adversary to build and
+ sustain a chain of linked, notarized blocks in secret.
+ For this reason, Dfinity does not suffer from the selfish mining attack
+ [4] or the nothing-at-stake problem.
+\end_layout
+
+\begin_layout Standard
+
+\series bold
+Advantages
+\end_layout
+
+\begin_layout Standard
+Fork-free protocols typically use BFT style algorithms.
+ These are systems where a vote for a block consists of a prepare followed
+ by a commit.
+ They are fork-free, which is essential for cross-shard communication.
+ Traditionally, PBFT couldn't scale to the size of a network.
+ So instead, we: 
+\end_layout
+
+\begin_layout Standard
+Subsample from the entire population so many validators are voting but not
+ all (in Zilliqa, they use X).
+ If say 400 participants are voting and we assume that f<25% are byzantine.
+ We can show that the probability more than 2/3 of those voting are also
+ byzantine is less than the number of atoms in the universe.
+ 
+\end_layout
+
+\begin_layout Standard
+
+\series bold
+What are nodes voting on?
+\end_layout
+
+\begin_layout Standard
+However, a key question here is: what precisely are the nodes voting on?
+ A simple scheme would be for nodes to run the transactions in a block and
+ verify that they are valid.
+ If more than half the nodes agree that a block is valid it is finalised
+ during notarisation.
+ However, this presents problems in the context of sharding: the validators
+ do not have the storage capacity or bandwidth to maintain the state of
+ all shards, and yet they must be shuffled quickly between shards.
+ One solution to this problem is to store the witness data with the transaction
+ in a block, entailing that a block is 
+\begin_inset Quotes eld
+\end_inset
+
+self-authenticating
+\begin_inset Quotes erd
+\end_inset
+
+, and the witness data need not be downloaded.
+ 
+\end_layout
+
+\begin_layout Standard
+Another solution is for validators to just check that data is available,
+ rather than the correctness of a block.
+ If a block is unavailable some honest actor in the network may respond
+ with a fraud proof and take the faulty block creator's deposit.
+ Ultimately, we offload the actual checking of whether a block is correct
+ or not to the network.
+ Just checking data availability has a second advantage: the committee can
+ share the workload of the task.
+ Below we give an outline of how this may be made possible:
+\end_layout
+
+\begin_layout Standard
+Blocks are expanded with an erasure code to a size of 400, say.
+ The erasure code is a redundant encoding scheme which ensures that if 1/6
+ of the code is available, the original block can be reconstructed by honest
+ nodes within the network.
+ Then each of the 400 committee members checks for 3 or 4 pieces of data.
+ By the probabilistic sampling, we can ensure that 2/3 of the committee
+ is honest.
+ We also require a threshold signature of 1/2 for a block to be notarised
+ for its validitiy.
+ 
+\end_layout
+
+\begin_layout Standard
+If a block is available, then 2/3 of the committee will vote and so we have
+ no issues.
+ 
+\end_layout
+
+\begin_layout Standard
+If a block is unavailable, then fewer than 1/6 of honest members can have
+ pieces of data.
+ And so even with these votes, and 1/3 of the dishonest majority, they cannot
+ reach the 50% threshold required.
+ We devote a further section to data availability proofs.
+ 
 \end_layout
 
 \begin_layout Standard
